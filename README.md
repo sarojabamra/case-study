@@ -4,24 +4,23 @@ This project is a full-stack e-commerce platform built as a case study. It featu
 
 ## Features
 
-*   **Product Catalog**: Browse products by categories and brands.
-*   **Shopping Cart**: Add, update, and remove items from the cart.
-*   **User Authentication**: Secure login/signup for shoppers and brand staff using Keycloak.
-*   **Protected Routes**: Different access levels for regular users, brand staff (tenants), and administrators.
-*   **User Account Management**: View orders, manage profile details.
-*   **Brand Studio**: A dedicated portal for brand staff to manage their products and orders (requires brand-specific login).
-*   **Admin Panel**: For platform administrators to manage users, products, and other platform settings.
-*   **Error Handling**: Robust error display and session management.
+- **Product Catalog**: Browse products by categories and brands.
+- **Shopping Cart**: Add, update, and remove items from the cart. The cart items are stored locally for users that have not logged in.
+- **User Authentication**: Secure login/signup for shoppers and brand staff using Keycloak.
+- **Protected Routes**: Different access levels for regular users, brand staff (tenants), and administrators.
+- **User Account Management**: View orders, update profile details like update passwords, add/remove/edit addresses.
+- **Brand Studio**: A dedicated portal for brand staff to manage their products and orders (requires brand-specific login).
+- **Admin Panel**: For platform administrators to manage users, products, and other platform settings.
+- **Error Handling**: Error display and session management.
 
 ## Technologies Used
 
-*   **Frontend**: React (with TypeScript), Vite, TailwindCSS, React Router DOM, Zod (for validation).
-*   **Backend**: Python (FastAPI), SQLAlchemy (ORM), SQLite (Database).
-*   **Authentication**: Keycloak (OpenID Connect provider).
-*   **Testing**: Jest (Frontend), Pytest (Backend).
+- **Frontend**: React (with TypeScript), Vite, TailwindCSS, React Router DOM, Zod (for validation).
+- **Backend**: Python (FastAPI), SQLAlchemy (ORM), SQLite (Database).
+- **Authentication**: Keycloak (OpenID Connect provider).
+- **Testing**: Jest (Frontend), Pytest (Backend).
 
 ## ARCHITECTURE
-User clicks button → React event handler runs → frontend function prepares data → API request is sent (with authentication token) → FastAPI backend route receives request → Request is potentially passed through Keycloak middleware for token validation → Controller/service processes request → SQLAlchemy queries/updates `ecommerce.db` → Backend sends JSON response → Frontend receives response → React state changes → UI updates.
 
 ```
 +-------+     +----------+     +-----+     +----------+     +--------+
@@ -34,7 +33,7 @@ User clicks button → React event handler runs → frontend function prepares d
                        +------------------------- protected routes based on roles
 ```
 
-## ⚙️ Local Development Setup
+## Local Development Setup
 
 Follow these steps to get the project up and running on your local machine.
 
@@ -42,10 +41,10 @@ Follow these steps to get the project up and running on your local machine.
 
 Before you begin, ensure you have the following installed:
 
-*   **Python 3.8+**
-*   **Node.js LTS** (and npm or yarn)
-*   **Docker** (for running Keycloak)
-*   **SQLite3** (usually pre-installed with Python, no separate installation needed unless you encounter issues)
+- **Python 3.8+**
+- **Node.js LTS** (and npm or yarn)
+- **Docker** (for running Keycloak)
+- **SQLite3** (usually pre-installed with Python, no separate installation needed unless you encounter issues)
 
 ### 1. Backend Setup
 
@@ -88,28 +87,32 @@ Before you begin, ensure you have the following installed:
     cd ..
     ```
 
-### 3. Keycloak Setup (Using Docker)
+### 3. Keycloak Setup (Local)
 
 This project uses Keycloak for authentication. You need to run a Keycloak instance and configure it.
 
-1.  **Start Keycloak using Docker**:
+1.  **Start a Keycloak instance locally**:
+
+    Inside the folder where you've installed Keycloak, run this command:
+
     ```bash
-    docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin --name keycloak quay.io/keycloak/keycloak:24.0.4 start-dev
+    bin/kc.sh start-dev
     ```
-    This command starts Keycloak on `http://localhost:8080` with initial admin credentials `admin`/`admin`.
+
+    This command starts Keycloak on `http://localhost:8080` (usually)
 
 2.  **Configure Keycloak**:
-    *   Access Keycloak Admin Console at `http://localhost:8080`.
-    *   Login with `admin`/`admin`.
-    *   **Create a new Realm**: Hover over "Master" in the top-left, click "Add realm", and name it `ecommerce`.
-    *   **Create a new Client**: Go to the `ecommerce` realm, navigate to "Clients", click "Create client".
-        *   **Client ID**: `ecommerce-client`
-        *   **Client authentication**: ON
-        *   **Authorization**: ON
-        *   **Standard flow**: ON
-        *   **Valid redirect URIs**: `http://localhost:5173/*`
-        *   **Web origins**: `http://localhost:5173`
-        *   Save the client. Note down the **Client secret** from the "Credentials" tab and update your `.env` file in the project root.
+    - Access Keycloak Admin Console at `http://localhost:8080`.
+    - Login with your username and password.
+    - **Create a new Realm**: Hover over "Master" in the top-left, click "Add realm", and name it `ecommerce`.
+    - **Create a new Client**: Go to the `ecommerce` realm, navigate to "Clients", click "Create client".
+      - **Client ID**: `ecommerce-client`
+      - **Client authentication**: ON
+      - **Authorization**: ON
+      - **Standard flow**: ON
+      - **Valid redirect URIs**: `http://localhost:5173/*`
+      - **Web origins**: `http://localhost:5173`
+      - Save the client. Note down the **Client secret** from the "Credentials" tab and update your `.env` file in the project root.
 
 ### 4. Database Setup and Seeding
 
@@ -117,14 +120,22 @@ The project uses an SQLite database named `ecommerce.db`. The `seed.py` script w
 
 1.  **Run the seeding script**:
     From the project root (with your Python virtual environment activated):
+
     ```bash
     python seed.py
     ```
+
     This command will:
-    *   Delete any existing `ecommerce.db`.
-    *   Create a new `ecommerce.db` with the necessary tables.
-    *   Populate the database with sample products, categories, and brands.
-    *   **Important**: After seeding, you will need to manually create users in Keycloak and assign them roles as described below. `seed.py` will automatically update one specific user to `ADMIN` based on its internal logic if that user already exists in Keycloak.
+    - Delete any existing `ecommerce.db`.
+    - Create a new `ecommerce.db` with the necessary tables.
+    - Populate the database with sample products, categories, and brands.
+    - **Important**: After seeding, you will need to manually create a user either in Keycloak or through the /signup route named `admin`. Then run this command:
+
+    ```bash
+    python seed.py
+    ```
+
+    again. `seed.py` will automatically update the role of that user to `ADMIN`.
 
 ### 5. User Creation
 
@@ -132,44 +143,56 @@ After Keycloak and database setup, you need to create users.
 
 #### Normal User (Shopper)
 
-*   Register directly through the frontend application's `/signup` page. These users will have the default `USER` role.
+- Register directly through the frontend application's `/signup` page. These users will have the default `USER` role.
 
 #### Admin User
 
-1.  **Create a user in Keycloak**:
-    *   In Keycloak Admin Console (`http://localhost:8080`), go to the `ecommerce` realm, then "Users".
-    *   Click "Create new user". Provide a username (e.g., `adminuser`) and password.
-2.  **Assign `admin` role**:
-    *   Go to the created user's details, then "Role mapping".
-    *   Select "Filter by clients" and choose `ecommerce-client`.
-    *   Assign the `admin` client role to this user.
-3.  **Run `seed.py` (again)**:
+Either:
+
+1.  **Create an admin user through Keycloak**:
+    - In Keycloak Admin Console (`http://localhost:8080`), go to the `ecommerce` realm, then "Users".
+    - Click "Create new user". Provide a specific username (`admin`) and password.
+
+    (or)
+
+2.  **Create an admin user through the frontend interface**
+
+    Use the /signup route to create a user with the username `admin`
+
+    After 1 (or) 2:
+
+    **Run `seed.py` (again)**:
+
     ```bash
     python seed.py
     ```
-    The `seed.py` script has logic to identify a specific user (e.g., `admin@example.com` or similar, check `seed.py` for exact logic) and update their role in the application's database to `ADMIN` if they exist in Keycloak with the `admin` client role. This syncs Keycloak roles with the application's internal user representation.
+
+    The `seed.py` script has logic to identify a specific user with the username `admin` and update their role in the application's database to `ADMIN`.
 
 #### Tenant User (Brand Staff)
 
 Tenant users (brand staff) can access their brand's studio. This requires a specific setup:
 
-1.  **Create a user in Keycloak**:
-    *   In Keycloak Admin Console, go to the `ecommerce` realm, then "Users".
-    *   Click "Create new user". Provide a username (e.g., `adidas_staff`) and password.
-2.  **Assign `tenant` role**:
-    *   Go to the created user's details, then "Role mapping".
-    *   Select "Filter by clients" and choose `ecommerce-client`.
-    *   Assign the `tenant` client role to this user.
-3.  **Tenant Name Matching**: For the studio access to work, the `user.tenant_name` (which often defaults to the username or is derived from it) must match the tenant name in the URL (e.g., `/adidas/studio`). Ensure the `tenant_name` associated with the user in your backend matches the brand name they are supposed to manage.
+1. **The Admin Console**:
+   - In the Admin Console in the application, the admin can add staff users for specific brands.
+   - After selecting the brand. Click "Add staff". Provide a username (e.g., `adidas_staff`) and password.
+   - A tenant user with the role `TENANT` will be created.
 
-    *   **Important**: To access the studio, a brand staff member **must log in via their brand's specific login page**. For example, for the "Adidas" brand, they would go to `http://localhost:5173/adidas/login`. Attempting to access the studio via a general shopper login (`http://localhost:5173/login`) will result in a "Brand Studio Access Restricted" message, even if they have the correct tenant role. This is enforced by the `client/src/utils/routeGuards.tsx` and `client/src/utils/authSession.tsx` logic which checks the `isBrandStaffLoggedIn` flag set during the brand-specific login flow.
+2. **Tenant Login**:
+   - Now the tenant user can user the login credentials provided to sign in.
+   - The user can now go to their account settings to change their password accordingly.
+
+3. **Tenant Name Matching**: For the studio access to work, the `user.tenant_name` (which often defaults to the username or is derived from it) must match the tenant name in the URL (e.g., `/adidas/studio`).
+   - **Important**: To access the studio, a brand staff member **must log in via their brand's specific login page**. For example, for the "Adidas" brand, they would go to `http://localhost:5173/adidas/login`. Attempting to access the studio via a general shopper login (`http://localhost:5173/login`) will result in a "Brand Studio Access Restricted" message, even if they have the correct tenant role.
 
 ### 6. Running the Application
 
 1.  **Start the Backend (from project root)**:
+
     ```bash
     uvicorn server.main:app --reload
     ```
+
     The backend will typically run on `http://localhost:8000`.
 
 2.  **Start the Frontend (from `client` directory)**:
@@ -204,7 +227,6 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
 
 ## Important Notes
 
-*   **Database Reset**: Running `python seed.py` will **delete and recreate** your `ecommerce.db` file. This means any manual changes or user data not part of the seed script will be lost.
-*   **Keycloak Client Secret**: Remember to update the `KEYCLOAK_CLIENT_SECRET` in your `.env` file after creating the client in Keycloak.
-*   **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
-*   **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin email in `seed.py`, ensure the corresponding user exists in Keycloak.
+- **Database Reset**: Running `python seed.py` will **delete and recreate** your `ecommerce.db` file. This means any manual changes or user data not part of the seed script will be lost.
+- **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
+- **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin username in `seed.py`, ensure the corresponding user exists in Keycloak.
