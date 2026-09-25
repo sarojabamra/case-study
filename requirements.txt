@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+python-jose
+python-multipart
+httpx
+python-dotenv
+pytest
+boto3
+pillow

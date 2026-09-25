@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+:root {
+  --store-header-height: 3rem;
+}
+
+@theme {
+  --font-display: system-ui, "Segoe UI", sans-serif;
+  --font-sans: system-ui, "Segoe UI", sans-serif;
+  --color-canvas: #ffffff;
+  --color-surface: #f5f5f5;
+  --color-stone: #eeeeee;
+  --color-ink: #111111;
+  --color-charcoal: #222222;
+  --color-muted: #6b6b6b;
+  --color-olive: #4b4b4b;
+  --color-clay: #6b6b6b;
+  --color-clay-soft: #9a9a9a;
+  --color-accent: #1d4ed8;
+  --color-line: #e5e5e5;
+  --color-line-strong: #d4d4d4;
+  --color-danger: #ba1a1a;
+  --color-danger-bg: #ffdad6;
+  --color-on-danger: #93000a;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  a[href] {
+    cursor: pointer;
+    transition: color 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+  }
+
+  a[href]:hover {
+    opacity: 0.88;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: #e5e5e5;
+  }
+}
+
+@layer components {
+  .interactive-muted {
+    cursor: pointer;
+    transition: color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .interactive-muted:hover {
+    color: var(--color-ink);
+  }
+
+  .interactive-surface {
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .interactive-surface:hover:not(:disabled) {
+    border-color: var(--color-ink);
+    background-color: var(--color-surface);
+  }
+
+  .interactive-surface:disabled {
+    cursor: not-allowed;
+  }
+
+  .interactive-icon {
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .interactive-icon:hover:not(:disabled) {
+    border-color: var(--color-ink);
+    background-color: var(--color-surface);
+  }
+
+  .interactive-icon:disabled {
+    cursor: not-allowed;
+  }
+
+  .nav-mobile {
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .nav-mobile:hover {
+    background-color: var(--color-surface);
+  }
+
+  .nav-mobile-active {
+    background-color: var(--color-surface);
+    font-weight: 500;
+  }
+}
