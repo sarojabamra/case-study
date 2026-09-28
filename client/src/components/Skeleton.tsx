@@ -4,8 +4,8 @@ export function Skeleton({ className = "" }: { className?: string }) {
 
 export function ProductGridSkeleton() {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }, (_, index) => (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 8 }, (_, index) => (
         <div key={index} className="border border-line">
           <Skeleton className="aspect-[4/5]" />
           <div className="space-y-3 p-4">

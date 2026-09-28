@@ -108,15 +108,16 @@ This project uses Keycloak for authentication. You need to run a Keycloak instan
     - **Create a new Client**: Go to the `ecommerce` realm, navigate to "Clients", click "Create client".
       - **Client ID**: `ecommerce-client`
       - **Client authentication**: ON
-      - **Authorization**: ON
       - **Standard flow**: ON
-      - **Valid redirect URIs**: `http://localhost:5173/*`
-      - **Web origins**: `http://localhost:5173`
+      - **Direct Access Grants**: ON
+      - **Service Account Roles**: ON
       - Save the client. Note down the **Client secret** from the "Credentials" tab and update your `.env` file in the project root.
+      - Then go to the service account roles tab and give the client `manage-users`, `query-users` and `view-users` roles.
+      - Additonally, ensure that we have removed `email`, `fName` and `lName` from `Realm Settings`-> `User Profile`.
 
 ### 4. Database Setup and Seeding
 
-The project uses an SQLite database named `ecommerce.db`. The `seed.py` script will create a fresh database and populate it with sample data, including brands, products, and categories.
+The project uses an SQLite database named `ecommerce.db`. The `seed.py` script creates missing tables and adds sample brands, products, and categories. The catalogue includes Apple, Samsung, Sony, Nike, Adidas, and IKEA, with illustrative USD prices and a mix of available, low-stock, and out-of-stock products. Prices are demo values, not current retail prices.
 
 1.  **Run the seeding script**:
     From the project root (with your Python virtual environment activated):
@@ -227,6 +228,6 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
 
 ## Important Notes
 
-- **Database Reset**: Running `python seed.py` will **delete and recreate** your `ecommerce.db` file. This means any manual changes or user data not part of the seed script will be lost.
+- **Repeatable seeding**: Running `python seed.py` adds missing seed records without deleting existing data or overwriting existing product prices and stock. Existing brands and products from earlier seed catalogues remain; the script does not replace them. Repeated runs do not duplicate seed products within the same brand.
 - **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
 - **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin username in `seed.py`, ensure the corresponding user exists in Keycloak.

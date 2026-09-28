@@ -93,53 +93,47 @@ def get_or_create_product(
     return product
 
 
+# Illustrative demo prices in USD, not current retail prices.
+# Quantity 0 exercises out-of-stock UI; quantity 1 exercises low-stock UI.
+catalogue = [
+    ("Apple", "Electronics", "iPhone 15", 699, 8),
+    ("Apple", "Electronics", "MacBook Air 13-inch", 999, 3),
+    ("Apple", "Electronics", "iPad", 349, 6),
+    ("Apple", "Electronics", "AirPods Pro", 249, 9),
+    ("Apple", "Accessories", "iPhone Silicone Case", 49, 12),
+    ("Samsung", "Electronics", "Galaxy S24", 799, 5),
+    ("Samsung", "Electronics", "Galaxy Tab S9", 699, 2),
+    ("Samsung", "Electronics", "Galaxy Buds FE", 99, 15),
+    ("Samsung", "Electronics", "Galaxy Watch6", 249, 0),
+    ("Samsung", "Home Appliances", "Samsung Microwave Oven", 149, 4),
+    ("Sony", "Electronics", "PlayStation 5", 499, 1),
+    ("Sony", "Accessories", "DualSense Wireless Controller", 69, 14),
+    ("Sony", "Electronics", "WH-1000XM5 Headphones", 349, 7),
+    ("Sony", "Electronics", "BRAVIA 55-inch TV", 799, 0),
+    ("Nike", "Footwear", "Air Force 1 '07", 115, 20),
+    ("Nike", "Footwear", "Air Max 90", 130, 6),
+    ("Nike", "Clothing", "Sportswear Club Fleece Hoodie", 65, 11),
+    ("Nike", "Accessories", "Heritage Backpack", 37, 8),
+    ("Adidas", "Footwear", "Stan Smith", 100, 10),
+    ("Adidas", "Footwear", "Samba OG", 100, 1),
+    ("Adidas", "Clothing", "Tiro Track Pants", 50, 16),
+    ("Adidas", "Accessories", "Adicolor Backpack", 35, 9),
+    ("IKEA", "Furniture", "BILLY Bookcase", 89, 5),
+    ("IKEA", "Furniture", "LACK Side Table", 15, 18),
+    ("IKEA", "Furniture", "POANG Armchair", 129, 3),
+    ("IKEA", "Home & Kitchen", "FARGKLAR Dinnerware Set", 40, 0),
+    ("IKEA", "Home & Kitchen", "RANARP Work Lamp", 55, 7),
+]
+
+# Derive these from the catalogue so every seeded brand and category has products.
 categories = {
     name: get_or_create_category(name)
-    for name in ("Ceramics", "Furniture", "Lighting", "Textiles", "Objects")
+    for name in dict.fromkeys(row[1] for row in catalogue)
 }
-
 brands = {
     name: get_or_create_tenant(name)
-    for name in (
-        "Studio Ilse",
-        "Kanso Works",
-        "Atelier North",
-        "Field & Kiln",
-        "Maison Sable",
-        "Hollow Form",
-    )
+    for name in dict.fromkeys(row[0] for row in catalogue)
 }
-
-# quantity 0 is out of stock, 1 is the low-stock state the storefront shows.
-catalogue = [
-    ("Studio Ilse", "Ceramics", "Smoke Glass Carafe", 76, 8),
-    ("Studio Ilse", "Furniture", "Plaster Side Table", 510, 3),
-    ("Studio Ilse", "Lighting", "Linen Shade Floor Lamp", 420, 6),
-    ("Studio Ilse", "Textiles", "Undyed Wool Throw", 180, 9),
-    ("Kanso Works", "Furniture", "Paper Cord Chair", 890, 2),
-    ("Kanso Works", "Ceramics", "Blackened Steel Bowl", 64, 12),
-    ("Kanso Works", "Furniture", "Cedar Bench", 1200, 0),
-    ("Kanso Works", "Objects", "Stone Incense Dish", 38, 15),
-    ("Atelier North", "Lighting", "Birch Pendant", 260, 5),
-    ("Atelier North", "Objects", "Slate Tray", 48, 14),
-    ("Atelier North", "Furniture", "Oak Daybed", 2400, 1),
-    ("Atelier North", "Ceramics", "Clay Cup, Set of Two", 42, 20),
-    ("Atelier North", "Objects", "Limestone Bookend", 95, 7),
-    ("Field & Kiln", "Ceramics", "Ash Glaze Vase", 210, 6),
-    ("Field & Kiln", "Ceramics", "Speckled Pourer", 88, 0),
-    ("Field & Kiln", "Objects", "Tile Trivet", 36, 16),
-    ("Field & Kiln", "Ceramics", "Wide Serving Bowl", 140, 4),
-    ("Maison Sable", "Textiles", "Sand Linen Curtain", 320, 3),
-    ("Maison Sable", "Textiles", "Boucle Cushion", 78, 11),
-    ("Maison Sable", "Furniture", "Oak Frame Mirror", 460, 2),
-    ("Maison Sable", "Lighting", "Brass Picture Light", 190, 5),
-    ("Maison Sable", "Textiles", "Raw Silk Runner", 150, 8),
-    ("Hollow Form", "Lighting", "Marble Lamp Base", 680, 2),
-    ("Hollow Form", "Objects", "Cast Iron Pan", 120, 9),
-    ("Hollow Form", "Objects", "Walnut Cutting Board", 85, 1),
-    ("Hollow Form", "Ceramics", "Terracotta Planter", 54, 10),
-    ("Hollow Form", "Furniture", "Leather Strap Shelf", 240, 0),
-]
 
 for brand, category, name, price, quantity in catalogue:
     get_or_create_product(name, price, quantity, categories[category], brands[brand])

@@ -45,7 +45,7 @@ function buildCatalogueApiPath(
     params.set("sort", sortMode);
   }
   params.set("page", String(page));
-  params.set("limit", "6");
+  params.set("limit", "8");
   return `/products/?${params.toString()}`;
 }
 
@@ -175,14 +175,14 @@ export function CataloguePage() {
         id="filters"
         className="sticky top-[var(--store-header-height,3rem)] z-30 border-y border-line bg-surface px-5 py-4 md:px-10 lg:px-16"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="relative max-w-md flex-1">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative w-96 max-w-full shrink-0">
             <input
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
               placeholder="Search products"
               aria-label="Search products"
-              className="w-full border border-line-strong bg-canvas px-3 py-2 text-sm outline-none focus:border-ink"
+              className="h-11 w-full border border-line-strong bg-canvas py-2 pl-3 pr-16 text-sm outline-none focus:border-ink"
             />
             {searchDraft ? (
               <button
@@ -194,7 +194,20 @@ export function CataloguePage() {
               </button>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <label className="flex shrink-0 items-center gap-2 sm:ml-auto text-sm text-muted">
+            Sort
+            <select
+              value={sortMode}
+              onChange={(event) => updateSortMode(event.target.value as SortMode)}
+              className="border border-line-strong bg-canvas px-2 py-2 text-sm text-ink normal-case"
+            >
+              <option value="listed">As listed</option>
+              <option value="price-asc">Price low–high</option>
+              <option value="price-desc">Price high–low</option>
+              <option value="stock">Stock</option>
+            </select>
+          </label>
+          <div className="flex w-full flex-wrap gap-2">
             {brandId ? (
               <Chip active onClick={() => updateSearchParam("brand", "")}>
                 {selectedBrandName} · Clear
@@ -214,19 +227,6 @@ export function CataloguePage() {
             ))}
           </div>
           {categoriesQuery.isError ? <p className="text-sm text-muted">Categories could not be loaded.</p> : null}
-          <label className="flex items-center gap-2 text-sm text-muted">
-            Sort
-            <select
-              value={sortMode}
-              onChange={(event) => updateSortMode(event.target.value as SortMode)}
-              className="border border-line-strong bg-canvas px-2 py-2 text-sm text-ink normal-case"
-            >
-              <option value="listed">As listed</option>
-              <option value="price-asc">Price low–high</option>
-              <option value="price-desc">Price high–low</option>
-              <option value="stock">Stock</option>
-            </select>
-          </label>
         </div>
       </section>
       <section id="products" className="scroll-mt-36 px-5 py-8 md:px-10 lg:px-16">
@@ -255,7 +255,7 @@ export function CataloguePage() {
           </div>
         ) : null}
         {visibleProducts.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {visibleProducts.map((product) => (
               <ProductCard
                 key={product.id}
