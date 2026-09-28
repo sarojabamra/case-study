@@ -5,7 +5,6 @@ import httpx
 from jose import jwt, JWTError
 from fastapi import (
     Depends,
-    Header,
     HTTPException,
     status,
 )
@@ -18,8 +17,6 @@ from sqlalchemy.orm import Session
 from server.database import get_db
 from server.env import load_app_env
 from server.models import User
-from server.repositories import services
-from server.studio_session import parse_studio_session
 
 load_app_env()
 
@@ -116,40 +113,6 @@ async def get_current_user(
         )
 
     return user
-
-
-def get_tenant_studio_user(
-    tenant_name: str,
-    studio_session: str | None = Header(default=None, alias="X-Studio-Session"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> User:
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
-    if not studio_session:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Sign in through your brand login to use the studio",
-        )
-    try:
-        payload = parse_studio_session(studio_session)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Sign in through your brand login to use the studio",
-        )
-    user_id = payload.get("sub")
-    session_tenant_id = payload.get("tenant_id")
-    if user_id is None or session_tenant_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Sign in through your brand login to use the studio",
-        )
-    if int(user_id) != current_user.id or int(session_tenant_id) != tenant.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Sign in through your brand login to use the studio",
-        )
-    return current_user
 
 
 async def require_admin(

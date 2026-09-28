@@ -122,15 +122,6 @@ export const brandSchema = z.object({
 
 export const staffSchema = credentialsSchema;
 
-export function orderQuantitySchema(available: number) {
-  return z
-    .string()
-    .trim()
-    .min(1, "Enter at least 1.")
-    .refine((value) => /^\d+$/.test(value) && Number(value) >= 1, "Enter at least 1.")
-    .refine((value) => Number(value) <= available, `Only ${available} left.`);
-}
-
 export const addressFormSchema = z
   .object({
     label: z.string(),

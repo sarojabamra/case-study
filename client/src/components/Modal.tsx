@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { joinClassNames } from "@/utils/classNames";
-
 type ModalProps = {
   open: boolean;
   title: string;
@@ -107,8 +105,4 @@ export function Dialog(props: ModalProps) {
 
 export function Sheet(props: ModalProps) {
   return <Modal {...props} />;
-}
-
-export function panelClass(className?: string) {
-  return joinClassNames("border border-line bg-surface", className);
 }
