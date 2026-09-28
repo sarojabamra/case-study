@@ -62,6 +62,19 @@ def list_tenants(db: Session):
 
 def delete_tenant(db: Session, tenant_name: str):
     tenant = services.get_tenant(db, tenant_name)
+    dependencies = []
+    if db.query(User.id).filter(User.tenant_id == tenant.id).first():
+        dependencies.append("tenant users")
+    if db.query(Product.id).filter(Product.tenant_id == tenant.id).first():
+        dependencies.append("products")
+    if dependencies:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete this brand because it has "
+            + " and ".join(dependencies)
+            + ". Remove or reassign them before deleting the brand.",
+        )
+
     db.delete(tenant)
     db.commit()
     return None

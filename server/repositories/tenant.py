@@ -4,7 +4,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session, selectinload
 
 from server.images import build_object_key, prepare_image, read_upload
-from server.models import Product, User
+from server.models import OrderItem, Product, SavedCartItem, User
 from server.repositories import services
 from server.schemas import ProductCreate, ProductUpdate
 from server.storage import ObjectStore, StorageError
@@ -90,6 +90,19 @@ def delete_product(
     tenant = services.verify_tenant_user(db, current_user, tenant_name)
 
     db_product = services.get_product_for_tenant(db, tenant.id, product_id)
+    dependencies = []
+    if db.query(SavedCartItem.id).filter(SavedCartItem.product_id == product_id).first():
+        dependencies.append("customers' saved carts")
+    if db.query(OrderItem.id).filter(OrderItem.product_id == product_id).first():
+        dependencies.append("order history")
+    if dependencies:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete this product because it is in "
+            + " and ".join(dependencies)
+            + ". Set its stock to 0 to prevent further purchases.",
+        )
+
     image_key = db_product.image_key
 
     db.delete(db_product)
