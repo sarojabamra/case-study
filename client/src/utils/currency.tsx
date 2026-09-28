@@ -18,7 +18,9 @@ function readStoredCurrency(): Currency {
 }
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>(() => readStoredCurrency());
+  const [currency, setCurrencyState] = useState<Currency>(() =>
+    readStoredCurrency(),
+  );
 
   function setCurrency(next: Currency) {
     setCurrencyState(next);
@@ -35,7 +37,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     format,
   };
 
-  return <CurrencyContext.Provider value={currencyContextValue}>{children}</CurrencyContext.Provider>;
+  return (
+    <CurrencyContext.Provider value={currencyContextValue}>
+      {children}
+    </CurrencyContext.Provider>
+  );
 }
 
 export function useCurrency() {

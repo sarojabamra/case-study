@@ -28,18 +28,38 @@ function OrderDetail() {
   const params = useParams();
   const location = useLocation();
   const orderId = Number(params.orderId);
-  const confirmed = Boolean((location.state as { confirmed?: boolean } | null)?.confirmed);
+  const confirmed = Boolean(
+    (location.state as { confirmed?: boolean } | null)?.confirmed,
+  );
   const orderIdIsValid = Number.isInteger(orderId) && orderId > 0;
-  const loadOrder = useCallback(() => api<Order>(`/orders/${orderId}`), [orderId]);
-  const orderQuery = useLoadData(loadOrder, { enabled: orderIdIsValid, showErrorToast: false });
+  const loadOrder = useCallback(
+    () => api<Order>(`/orders/${orderId}`),
+    [orderId],
+  );
+  const orderQuery = useLoadData(loadOrder, {
+    enabled: orderIdIsValid,
+    showErrorToast: false,
+  });
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmReturn, setConfirmReturn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useDocumentTitle(`Order ${orderId} · E-commerce`);
 
-  if (!Number.isInteger(orderId) || orderId <= 0 || (orderQuery.isError && orderQuery.error instanceof ApiError && orderQuery.error.status === 404)) {
-    return <SystemState title="Order not found." body="That order is not in your history." action={{ href: "/orders", label: "Your orders" }} />;
+  if (
+    !Number.isInteger(orderId) ||
+    orderId <= 0 ||
+    (orderQuery.isError &&
+      orderQuery.error instanceof ApiError &&
+      orderQuery.error.status === 404)
+  ) {
+    return (
+      <SystemState
+        title="Order not found."
+        body="That order is not in your history."
+        action={{ href: "/orders", label: "Your orders" }}
+      />
+    );
   }
 
   if (orderQuery.isPending) {
@@ -47,7 +67,13 @@ function OrderDetail() {
   }
 
   if (!orderQuery.data) {
-    return <SystemState title="The order could not be loaded." body="Try your order history again." action={{ href: "/orders", label: "Your orders" }} />;
+    return (
+      <SystemState
+        title="The order could not be loaded."
+        body="Try your order history again."
+        action={{ href: "/orders", label: "Your orders" }}
+      />
+    );
   }
 
   const order = orderQuery.data;
@@ -86,55 +112,90 @@ function OrderDetail() {
     <div className="mx-auto max-w-3xl px-5 py-10 md:px-10">
       {confirmed ? (
         <div className="mb-8 border border-olive bg-surface px-5 py-4">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-olive">Order placed</p>
-          <p className="mt-2 font-display text-3xl">Thank you. Your order is recorded.</p>
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-olive">
+            Order placed
+          </p>
+          <p className="mt-2 font-display text-3xl">
+            Thank you. Your order is recorded.
+          </p>
         </div>
       ) : null}
-      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">Order #{order.id}</p>
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+        Order #{order.id}
+      </p>
       <h1 className="mt-2 font-display text-4xl font-light">Order detail</h1>
       <p className="mt-3 text-sm text-muted">
         {formatOrderStatus(order.status)}
-        {order.return_status ? ` · ${formatReturnStatus(order.return_status)}` : ""}
+        {order.return_status
+          ? ` · ${formatReturnStatus(order.return_status)}`
+          : ""}
         {" · "}
-        {order.total_quantity} items · <span className="tabular-nums">{formatPrice(order.total_amount)}</span>
+        {order.total_quantity} items ·{" "}
+        <span className="tabular-nums">{formatPrice(order.total_amount)}</span>
       </p>
       {order.shipping_address?.line1 ? (
         <div className="mt-8 border border-line bg-surface p-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted">Shipped to</p>
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted">
+            Shipped to
+          </p>
           <p className="mt-2 text-sm text-ink">
-            {order.shipping_address.label ? `${order.shipping_address.label} · ` : ""}
+            {order.shipping_address.label
+              ? `${order.shipping_address.label} · `
+              : ""}
             {formatAddressLines(order.shipping_address).join(" · ")}
           </p>
         </div>
       ) : null}
       <ul className="mt-8 divide-y divide-line border-y border-line">
         {order.items.map((orderLine) => (
-          <li key={orderLine.id} className="flex items-baseline justify-between gap-4 py-4">
+          <li
+            key={orderLine.id}
+            className="flex items-baseline justify-between gap-4 py-4"
+          >
             <div>
-              <Link to={`/products/${orderLine.product_id}`} className="font-display text-2xl">
+              <Link
+                to={`/products/${orderLine.product_id}`}
+                className="font-display text-2xl"
+              >
                 {orderLine.product_name ?? `Product ${orderLine.product_id}`}
               </Link>
-              <p className="mt-1 text-sm text-muted">Quantity {orderLine.quantity}</p>
+              <p className="mt-1 text-sm text-muted">
+                Quantity {orderLine.quantity}
+              </p>
             </div>
-            <p className="text-sm tabular-nums">{formatPrice(orderLine.price)}</p>
+            <p className="text-sm tabular-nums">
+              {formatPrice(orderLine.price)}
+            </p>
           </li>
         ))}
       </ul>
-      {(canCancel || canRequestReturn) ? (
+      {canCancel || canRequestReturn ? (
         <div className="mt-8 flex flex-wrap gap-3">
           {canCancel ? (
-            <Button variant="secondary" onClick={() => setConfirmCancel(true)}>Cancel order</Button>
+            <Button variant="secondary" onClick={() => setConfirmCancel(true)}>
+              Cancel order
+            </Button>
           ) : null}
           {canRequestReturn ? (
-            <Button variant="secondary" onClick={() => setConfirmReturn(true)}>Request return</Button>
+            <Button variant="secondary" onClick={() => setConfirmReturn(true)}>
+              Request return
+            </Button>
           ) : null}
         </div>
       ) : null}
       <div className="mt-8 flex flex-wrap gap-4 text-sm">
-        <Link to="/orders" className="underline underline-offset-4">View order history</Link>
-        <Link to="/" className="underline underline-offset-4">Continue shopping</Link>
+        <Link to="/orders" className="underline underline-offset-4">
+          View order history
+        </Link>
+        <Link to="/" className="underline underline-offset-4">
+          Continue shopping
+        </Link>
       </div>
-      {!order.items.length ? <div className="mt-6"><Empty title="This order has no items." /></div> : null}
+      {!order.items.length ? (
+        <div className="mt-6">
+          <Empty title="This order has no items." />
+        </div>
+      ) : null}
       <Confirm
         open={confirmCancel}
         title="Cancel order"

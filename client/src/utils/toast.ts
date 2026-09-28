@@ -30,7 +30,9 @@ export const toastStore = {
   },
 
   dismiss(toastId: number) {
-    visibleToasts = visibleToasts.filter((toastMessage) => toastMessage.id !== toastId);
+    visibleToasts = visibleToasts.filter(
+      (toastMessage) => toastMessage.id !== toastId,
+    );
     notifyToastListeners();
   },
   subscribe(listener: () => void) {
@@ -42,6 +44,9 @@ export const toastStore = {
   },
 };
 
-export function toastFailure(error: unknown, fallbackMessage = "Something went wrong. Try again.") {
+export function toastFailure(
+  error: unknown,
+  fallbackMessage = "Something went wrong. Try again.",
+) {
   toastStore.failure(error instanceof Error ? error.message : fallbackMessage);
 }

@@ -13,7 +13,11 @@ export const passwordSchema = z
   .string()
   .min(1, "Enter a password.")
   .refine(
-    (value) => value.length >= 8 && value.length <= 64 && /[A-Za-z]/.test(value) && /\d/.test(value),
+    (value) =>
+      value.length >= 8 &&
+      value.length <= 64 &&
+      /[A-Za-z]/.test(value) &&
+      /\d/.test(value),
     "Use 8 or more characters, with a letter and a number.",
   );
 
@@ -23,7 +27,8 @@ export const credentialsSchema = z.object({
 });
 
 const lettersOnlyPattern = /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
-const lettersOnlyMessage = "Use letters only. Spaces, hyphens, and apostrophes are allowed. No numbers.";
+const lettersOnlyMessage =
+  "Use letters only. Spaces, hyphens, and apostrophes are allowed. No numbers.";
 
 function lettersOnlyField(empty: string, max = 80) {
   return z
@@ -62,13 +67,21 @@ export const changePasswordSchema = z
     path: ["new_password"],
   });
 
-function labeledName(empty: string, format: string, max: number, pattern?: RegExp) {
+function labeledName(
+  empty: string,
+  format: string,
+  max: number,
+  pattern?: RegExp,
+) {
   return z
     .string()
     .trim()
     .min(1, empty)
     .max(max, format)
-    .refine((value) => value.length >= 2 && (pattern ? pattern.test(value) : true), format);
+    .refine(
+      (value) => value.length >= 2 && (pattern ? pattern.test(value) : true),
+      format,
+    );
 }
 
 export const brandNameSchema = labeledName(
@@ -85,7 +98,11 @@ export const categoryNameSchema = labeledName(
   namePattern,
 );
 
-export const productNameSchema = labeledName("Enter a product name.", "Use 2–80 characters.", 80);
+export const productNameSchema = labeledName(
+  "Enter a product name.",
+  "Use 2–80 characters.",
+  80,
+);
 
 export const priceSchema = z
   .string()
@@ -103,7 +120,10 @@ export const stockSchema = z
   .string()
   .trim()
   .min(1, "Enter a whole number from 0 to 100000.")
-  .refine((value) => /^\d+$/.test(value) && Number(value) <= 100000, "Enter a whole number from 0 to 100000.");
+  .refine(
+    (value) => /^\d+$/.test(value) && Number(value) <= 100000,
+    "Enter a whole number from 0 to 100000.",
+  );
 
 export const productSchema = z.object({
   name: productNameSchema,
@@ -153,7 +173,12 @@ export const addressFormSchema = z
   });
 
 export function safeNext(value: string | null): string | null {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+  if (
+    !value ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.startsWith("/\\")
+  ) {
     return null;
   }
   return value;

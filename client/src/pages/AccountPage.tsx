@@ -6,14 +6,21 @@ import { api } from "@/services/api";
 import type { AddressPage, Me, UserAddress } from "@/services/types";
 import { RequireAuth } from "@/utils/routeGuards";
 import { useAuth } from "@/utils/authSession";
-import { AddressFormFields, type AddressFormValues } from "@/components/AddressFormFields";
+import {
+  AddressFormFields,
+  type AddressFormValues,
+} from "@/components/AddressFormFields";
 import { Button } from "@/components/Button";
 import { Confirm } from "@/components/Confirm";
 import { Field } from "@/components/Field";
 import { Empty } from "@/components/SystemState";
 import { Skeleton } from "@/components/Skeleton";
 import { useDocumentTitle } from "@/utils/title";
-import { addressFormSchema, changePasswordSchema, profileSchema } from "@/utils/schemas";
+import {
+  addressFormSchema,
+  changePasswordSchema,
+  profileSchema,
+} from "@/utils/schemas";
 import { formatAddressLines } from "@/utils/formatAddress";
 import { toastFailure, toastStore } from "@/utils/toast";
 import { useLoadData } from "@/utils/useLoadData";
@@ -75,8 +82,11 @@ export function AccountPage() {
 
 function Account() {
   const { user, refreshUser } = useAuth();
-  const [addressEditor, setAddressEditor] = useState<"new" | number | null>(null);
-  const [addressPendingRemoval, setAddressPendingRemoval] = useState<UserAddress | null>(null);
+  const [addressEditor, setAddressEditor] = useState<"new" | number | null>(
+    null,
+  );
+  const [addressPendingRemoval, setAddressPendingRemoval] =
+    useState<UserAddress | null>(null);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [isDeletingAddress, setIsDeletingAddress] = useState(false);
 
@@ -142,7 +152,9 @@ function Account() {
           ? savedAddresses.find((address) => address.id === addressEditor)
           : undefined;
       const isDefault =
-        addressEditor === "new" ? savedAddresses.length === 0 : (existing?.is_default ?? false);
+        addressEditor === "new"
+          ? savedAddresses.length === 0
+          : (existing?.is_default ?? false);
       const payload = buildAddressPayload(values, isDefault);
 
       if (addressEditor === "new") {
@@ -186,7 +198,9 @@ function Account() {
     }
     setIsDeletingAddress(true);
     try {
-      await api<void>(`/addresses/${addressPendingRemoval.id}`, { method: "DELETE" });
+      await api<void>(`/addresses/${addressPendingRemoval.id}`, {
+        method: "DELETE",
+      });
       setAddressPendingRemoval(null);
       if (addressEditor === addressPendingRemoval.id) {
         closeAddressForm();
@@ -214,7 +228,10 @@ function Account() {
         }),
       });
       passwordForm.reset();
-      toastStore.success("Password updated", "Use your new password next time you sign in.");
+      toastStore.success(
+        "Password updated",
+        "Use your new password next time you sign in.",
+      );
     } catch (error) {
       toastFailure(error);
     }
@@ -224,18 +241,30 @@ function Account() {
 
   return (
     <div className="mx-auto max-w-xl px-5 py-12 md:px-10">
-      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">Account</p>
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+        Account
+      </p>
       <h1 className="mt-2 font-display text-4xl font-light">Your account</h1>
-      <p className="mt-3 text-sm text-muted">Update your profile, saved addresses, and password.</p>
+      <p className="mt-3 text-sm text-muted">
+        Update your profile, saved addresses, and password.
+      </p>
 
       <section className="mt-10 border border-line bg-surface p-5">
         <h2 className="font-display text-2xl">Profile</h2>
         <form
           className="mt-6 space-y-4"
-          onSubmit={profileForm.handleSubmit((values) => void handleSaveProfile(values))}
+          onSubmit={profileForm.handleSubmit(
+            (values) => void handleSaveProfile(values),
+          )}
           noValidate
         >
-          <Field label="Username" value={user.username} readOnly disabled className="opacity-80" />
+          <Field
+            label="Username"
+            value={user.username}
+            readOnly
+            disabled
+            className="opacity-80"
+          />
           <Field
             label="Full name"
             autoComplete="name"
@@ -243,9 +272,14 @@ function Account() {
             {...profileForm.register("full_name")}
           />
           <p className="text-sm text-muted">
-            {roleLabel[user.role]}{user.tenant_name ? ` · ${user.tenant_name}` : ""}
+            {roleLabel[user.role]}
+            {user.tenant_name ? ` · ${user.tenant_name}` : ""}
           </p>
-          <Button type="submit" busy={profileForm.formState.isSubmitting} busyLabel="Saving…">
+          <Button
+            type="submit"
+            busy={profileForm.formState.isSubmitting}
+            busyLabel="Saving…"
+          >
             Save profile
           </Button>
         </form>
@@ -255,9 +289,15 @@ function Account() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-2xl">Saved addresses</h2>
           {addressEditor === null ? (
-            <Button variant="secondary" onClick={openNewAddressForm}>Add address</Button>
+            <Button variant="secondary" onClick={openNewAddressForm}>
+              Add address
+            </Button>
           ) : (
-            <button type="button" className="interactive-muted text-sm" onClick={closeAddressForm}>
+            <button
+              type="button"
+              className="interactive-muted text-sm"
+              onClick={closeAddressForm}
+            >
               Cancel
             </button>
           )}
@@ -267,7 +307,13 @@ function Account() {
         {addressesQuery.isError ? (
           <div className="mt-6">
             <Empty title="Addresses could not be loaded." />
-            <Button className="mt-4" variant="secondary" onClick={() => void addressesQuery.reload()}>Try again</Button>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() => void addressesQuery.reload()}
+            >
+              Try again
+            </Button>
           </div>
         ) : null}
 
@@ -280,19 +326,37 @@ function Account() {
               <li key={address.id} className="border border-line p-4">
                 <p className="text-sm font-medium text-ink">
                   {address.label ?? "Address"}
-                  {address.is_default ? <span className="ml-2 text-xs font-normal text-muted">Default</span> : null}
+                  {address.is_default ? (
+                    <span className="ml-2 text-xs font-normal text-muted">
+                      Default
+                    </span>
+                  ) : null}
                 </p>
-                <p className="mt-2 text-sm text-muted">{formatAddressLines(address).join(" · ")}</p>
+                <p className="mt-2 text-sm text-muted">
+                  {formatAddressLines(address).join(" · ")}
+                </p>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                  <button type="button" className="interactive-muted underline underline-offset-4" onClick={() => openEditAddressForm(address)}>
+                  <button
+                    type="button"
+                    className="interactive-muted underline underline-offset-4"
+                    onClick={() => openEditAddressForm(address)}
+                  >
                     Edit
                   </button>
                   {!address.is_default ? (
-                    <button type="button" className="interactive-muted underline underline-offset-4" onClick={() => void handleSetDefaultAddress(address.id)}>
+                    <button
+                      type="button"
+                      className="interactive-muted underline underline-offset-4"
+                      onClick={() => void handleSetDefaultAddress(address.id)}
+                    >
                       Set as default
                     </button>
                   ) : null}
-                  <button type="button" className="interactive-muted text-danger underline underline-offset-4" onClick={() => setAddressPendingRemoval(address)}>
+                  <button
+                    type="button"
+                    className="interactive-muted text-danger underline underline-offset-4"
+                    onClick={() => setAddressPendingRemoval(address)}
+                  >
                     Remove
                   </button>
                 </div>
@@ -302,10 +366,19 @@ function Account() {
         ) : (
           <form
             className="mt-6 grid gap-4 sm:grid-cols-2"
-            onSubmit={addressForm.handleSubmit((values) => void handleSaveAddress(values))}
+            onSubmit={addressForm.handleSubmit(
+              (values) => void handleSaveAddress(values),
+            )}
             noValidate
           >
-            <AddressFormFields form={addressForm} idPrefix={addressEditor === "new" ? "new-address" : `edit-address-${addressEditor}`} />
+            <AddressFormFields
+              form={addressForm}
+              idPrefix={
+                addressEditor === "new"
+                  ? "new-address"
+                  : `edit-address-${addressEditor}`
+              }
+            />
             <div className="sm:col-span-2">
               <Button type="submit" busy={isSavingAddress} busyLabel="Saving…">
                 {addressEditor === "new" ? "Save address" : "Update address"}
@@ -317,10 +390,14 @@ function Account() {
 
       <section className="mt-8 border border-line bg-surface p-5">
         <h2 className="font-display text-2xl">Password</h2>
-        <p className="mt-2 text-sm text-muted">Enter your current password, then choose a new one.</p>
+        <p className="mt-2 text-sm text-muted">
+          Enter your current password, then choose a new one.
+        </p>
         <form
           className="mt-6 space-y-4"
-          onSubmit={passwordForm.handleSubmit((values) => void handleChangePassword(values))}
+          onSubmit={passwordForm.handleSubmit(
+            (values) => void handleChangePassword(values),
+          )}
           noValidate
         >
           <Field
@@ -344,7 +421,11 @@ function Account() {
             error={passwordForm.formState.errors.confirm_new_password?.message}
             {...passwordForm.register("confirm_new_password")}
           />
-          <Button type="submit" busy={passwordForm.formState.isSubmitting} busyLabel="Updating…">
+          <Button
+            type="submit"
+            busy={passwordForm.formState.isSubmitting}
+            busyLabel="Updating…"
+          >
             Update password
           </Button>
         </form>
@@ -353,7 +434,11 @@ function Account() {
       <Confirm
         open={addressPendingRemoval !== null}
         title="Remove address"
-        body={addressPendingRemoval ? "Remove this saved address? Checkout will no longer list it." : ""}
+        body={
+          addressPendingRemoval
+            ? "Remove this saved address? Checkout will no longer list it."
+            : ""
+        }
         confirmLabel="Remove"
         destructive
         busy={isDeletingAddress}

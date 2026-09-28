@@ -1,6 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 
 import { api, ApiError } from "@/services/api";
@@ -36,10 +42,31 @@ function CredentialsForm({
   });
 
   return (
-    <form className="space-y-5" onSubmit={credentialsForm.handleSubmit(onSubmit)} noValidate>
-      <Field label="Username" autoComplete="username" hint={usernameHint} error={credentialsForm.formState.errors.username?.message} {...credentialsForm.register("username")} />
-      <Field label="Password" type="password" autoComplete={passwordAutoComplete} error={credentialsForm.formState.errors.password?.message} {...credentialsForm.register("password")} />
-      <Button type="submit" busy={credentialsForm.formState.isSubmitting} busyLabel={busyLabel} className="w-full">
+    <form
+      className="space-y-5"
+      onSubmit={credentialsForm.handleSubmit(onSubmit)}
+      noValidate
+    >
+      <Field
+        label="Username"
+        autoComplete="username"
+        hint={usernameHint}
+        error={credentialsForm.formState.errors.username?.message}
+        {...credentialsForm.register("username")}
+      />
+      <Field
+        label="Password"
+        type="password"
+        autoComplete={passwordAutoComplete}
+        error={credentialsForm.formState.errors.password?.message}
+        {...credentialsForm.register("password")}
+      />
+      <Button
+        type="submit"
+        busy={credentialsForm.formState.isSubmitting}
+        busyLabel={busyLabel}
+        className="w-full"
+      >
         {submitLabel}
       </Button>
     </form>
@@ -60,8 +87,12 @@ function AuthLayout({
   return (
     <div className="mx-auto grid max-w-5xl gap-12 px-5 py-14 md:px-10 lg:grid-cols-2">
       <section>
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">{eyebrow}</p>
-        <h1 className="mt-3 font-display text-4xl font-light tracking-tight md:text-5xl">{title}</h1>
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+          {eyebrow}
+        </p>
+        <h1 className="mt-3 font-display text-4xl font-light tracking-tight md:text-5xl">
+          {title}
+        </h1>
         <div className="mt-8">{children}</div>
       </section>
       <aside className="hidden border border-line bg-surface p-8 lg:block">
@@ -79,7 +110,11 @@ export function SignupPage() {
     defaultValues: { full_name: "", username: "", password: "" },
   });
 
-  async function handleSignupSubmit(values: { full_name: string; username: string; password: string }) {
+  async function handleSignupSubmit(values: {
+    full_name: string;
+    username: string;
+    password: string;
+  }) {
     try {
       await api<SignupResult>("/auth/signup", {
         method: "POST",
@@ -94,8 +129,16 @@ export function SignupPage() {
   }
 
   return (
-    <AuthLayout eyebrow="Patron ledger" title="Create your account" aside="Usernames are unique. After sign-up, you log in to shop.">
-      <form className="space-y-5" onSubmit={signupForm.handleSubmit(handleSignupSubmit)} noValidate>
+    <AuthLayout
+      eyebrow="Patron ledger"
+      title="Create your account"
+      aside="Usernames are unique. After sign-up, you log in to shop."
+    >
+      <form
+        className="space-y-5"
+        onSubmit={signupForm.handleSubmit(handleSignupSubmit)}
+        noValidate
+      >
         <Field
           label="Full name"
           autoComplete="name"
@@ -116,12 +159,20 @@ export function SignupPage() {
           error={signupForm.formState.errors.password?.message}
           {...signupForm.register("password")}
         />
-        <Button type="submit" busy={signupForm.formState.isSubmitting} busyLabel="Creating account…" className="w-full">
+        <Button
+          type="submit"
+          busy={signupForm.formState.isSubmitting}
+          busyLabel="Creating account…"
+          className="w-full"
+        >
           Create account
         </Button>
       </form>
       <p className="mt-6 text-sm">
-        Already have an account? <Link to="/login" className="underline underline-offset-4">Log in</Link>
+        Already have an account?{" "}
+        <Link to="/login" className="underline underline-offset-4">
+          Log in
+        </Link>
       </p>
     </AuthLayout>
   );
@@ -133,19 +184,36 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [isBrandLoginExpanded, setIsBrandLoginExpanded] = useState(false);
-  const prefilledUsername = (location.state as { username?: string } | null)?.username ?? "";
-  const brandNameForm = useForm({ resolver: zodResolver(brandSchema), defaultValues: { name: "" } });
+  const prefilledUsername =
+    (location.state as { username?: string } | null)?.username ?? "";
+  const brandNameForm = useForm({
+    resolver: zodResolver(brandSchema),
+    defaultValues: { name: "" },
+  });
   const loadBrands = useCallback(() => api<Brand[]>("/brands"), []);
-  const brandsQuery = useLoadData(loadBrands, { enabled: isBrandLoginExpanded, showErrorToast: false });
+  const brandsQuery = useLoadData(loadBrands, {
+    enabled: isBrandLoginExpanded,
+    showErrorToast: false,
+  });
 
   useDocumentTitle("Log in · E-commerce");
 
-  async function handleShopperLoginSubmit(credentials: { username: string; password: string }) {
+  async function handleShopperLoginSubmit(credentials: {
+    username: string;
+    password: string;
+  }) {
     try {
       const signedInUser = await login(credentials);
-      navigate(destinationAfterLogin(signedInUser.role, searchParams.get("next")), { replace: true });
+      navigate(
+        destinationAfterLogin(signedInUser.role, searchParams.get("next")),
+        { replace: true },
+      );
     } catch (error) {
-      toastStore.failure(error instanceof ApiError ? error.message : "Sign-in failed. Check your username and password.");
+      toastStore.failure(
+        error instanceof ApiError
+          ? error.message
+          : "Sign-in failed. Check your username and password.",
+      );
     }
   }
 
@@ -155,7 +223,10 @@ export function LoginPage() {
       return;
     }
     const matchingBrand = brandsQuery.data.find(
-      (brand) => brand.name.localeCompare(formValues.name, undefined, { sensitivity: "accent" }) === 0,
+      (brand) =>
+        brand.name.localeCompare(formValues.name, undefined, {
+          sensitivity: "accent",
+        }) === 0,
     );
     if (!matchingBrand) {
       brandNameForm.setError("name", { message: "That brand does not exist." });
@@ -165,7 +236,11 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout eyebrow="Private client" title="Log in" aside="Shoppers, brand staff, and admins use this door to enter the store.">
+    <AuthLayout
+      eyebrow="Private client"
+      title="Log in"
+      aside="Shoppers, brand staff, and admins use this door to enter the store."
+    >
       <CredentialsForm
         defaultUsername={prefilledUsername}
         submitLabel="Log in"
@@ -174,9 +249,16 @@ export function LoginPage() {
         onSubmit={handleShopperLoginSubmit}
       />
       <p className="mt-6 text-sm">
-        New here? <Link to="/signup" className="underline underline-offset-4">Create an account</Link>
+        New here?{" "}
+        <Link to="/signup" className="underline underline-offset-4">
+          Create an account
+        </Link>
       </p>
-      <button type="button" className="interactive-muted mt-8 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] underline underline-offset-4" onClick={() => setIsBrandLoginExpanded((expanded) => !expanded)}>
+      <button
+        type="button"
+        className="interactive-muted mt-8 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] underline underline-offset-4"
+        onClick={() => setIsBrandLoginExpanded((expanded) => !expanded)}
+      >
         Brand staff? Open your brand login
       </button>
       {isBrandLoginExpanded ? (
@@ -185,7 +267,12 @@ export function LoginPage() {
           onSubmit={brandNameForm.handleSubmit(navigateToBrandLoginPage)}
           noValidate
         >
-          <Field label="Brand name" autoComplete="organization" error={brandNameForm.formState.errors.name?.message} {...brandNameForm.register("name")} />
+          <Field
+            label="Brand name"
+            autoComplete="organization"
+            error={brandNameForm.formState.errors.name?.message}
+            {...brandNameForm.register("name")}
+          />
           <Button type="submit" variant="secondary">
             Continue
           </Button>
@@ -204,18 +291,28 @@ export function BrandLoginPage() {
   const brandsQuery = useLoadData(loadBrands);
 
   const matchingBrand = (brandsQuery.data ?? []).find(
-    (brand) => brand.name.localeCompare(tenantNameFromUrl, undefined, { sensitivity: "accent" }) === 0,
+    (brand) =>
+      brand.name.localeCompare(tenantNameFromUrl, undefined, {
+        sensitivity: "accent",
+      }) === 0,
   );
 
-  useDocumentTitle(`${matchingBrand?.name ?? tenantNameFromUrl} login · E-commerce`);
+  useDocumentTitle(
+    `${matchingBrand?.name ?? tenantNameFromUrl} login · E-commerce`,
+  );
 
   useEffect(() => {
     if (matchingBrand && matchingBrand.name !== tenantNameFromUrl) {
-      navigate(`/${encodeURIComponent(matchingBrand.name)}/login`, { replace: true });
+      navigate(`/${encodeURIComponent(matchingBrand.name)}/login`, {
+        replace: true,
+      });
     }
   }, [matchingBrand, navigate, tenantNameFromUrl]);
 
-  async function handleBrandStaffLoginSubmit(credentials: { username: string; password: string }) {
+  async function handleBrandStaffLoginSubmit(credentials: {
+    username: string;
+    password: string;
+  }) {
     try {
       const brandName = matchingBrand?.name ?? tenantNameFromUrl;
       await login({ ...credentials, tenantName: brandName });
@@ -255,7 +352,9 @@ export function BrandLoginPage() {
       title="Brand login"
       aside={`This signs you into ${matchingBrand?.name ?? tenantNameFromUrl} only.`}
     >
-      <p className="mb-6 text-sm text-muted">This signs you into {matchingBrand?.name ?? tenantNameFromUrl} only.</p>
+      <p className="mb-6 text-sm text-muted">
+        This signs you into {matchingBrand?.name ?? tenantNameFromUrl} only.
+      </p>
       <CredentialsForm
         submitLabel="Log in"
         busyLabel="Signing in…"
@@ -263,7 +362,10 @@ export function BrandLoginPage() {
         onSubmit={handleBrandStaffLoginSubmit}
       />
       <p className="mt-6 text-sm">
-        Shopping instead? <Link to="/login" className="underline underline-offset-4">Customer login</Link>
+        Shopping instead?{" "}
+        <Link to="/login" className="underline underline-offset-4">
+          Customer login
+        </Link>
       </p>
     </AuthLayout>
   );

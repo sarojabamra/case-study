@@ -1,10 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 
-import { api } from "@/services/api";
-import type { Category, Product } from "@/services/types";
+import {
+  useProductCategories,
+  useStudioProductActions,
+} from "@/hooks/useStudioProducts";
+import type { Product } from "@/services/types";
 import { Button } from "@/components/Button";
 import { Confirm } from "@/components/Confirm";
 import { Field, SelectField } from "@/components/Field";
@@ -12,12 +15,9 @@ import { Sheet } from "@/components/Modal";
 import { productImageSrc } from "@/utils/image";
 import { productSchema } from "@/utils/schemas";
 import { toastFailure, toastStore } from "@/utils/toast";
-import { useLoadData } from "@/utils/useLoadData";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-type SavedProduct = { product: { id: number } };
 
 type ProductValues = {
   name: string;
@@ -39,8 +39,9 @@ export function ProductSheet({
   onClose: () => void;
   onProductSaved?: () => void;
 }) {
-  const loadCategories = useCallback(() => api<Category[]>("/products/categories"), []);
-  const categoriesQuery = useLoadData(loadCategories, { enabled: open, showErrorToast: false });
+  const categoriesQuery = useProductCategories(open);
+  const { createProduct, updateProduct, uploadImage, removeImage } =
+    useStudioProductActions(brand);
   const productForm = useForm<ProductValues>({
     resolver: zodResolver(productSchema),
     defaultValues: { name: "", price: "", quantity: "", category_id: "" },
@@ -99,24 +100,16 @@ export function ProductSheet({
       };
       let productId = product?.id ?? createdProductId;
       if (productId == null) {
-        const saved = await api<SavedProduct>(`/${encodeURIComponent(brand)}/products`, {
-          method: "POST",
-          body: JSON.stringify(requestBody),
-        });
+        const saved = await createProduct(requestBody);
         productId = saved.product.id;
         setCreatedProductId(productId);
       } else {
-        await api(`/${encodeURIComponent(brand)}/products/${productId}`, {
-          method: "PUT",
-          body: JSON.stringify(requestBody),
-        });
+        await updateProduct(productId, requestBody);
       }
       if (imageFile) {
-        const formData = new FormData();
-        formData.append("file", imageFile);
-        await api(`/${encodeURIComponent(brand)}/products/${productId}/image`, { method: "POST", body: formData });
+        await uploadImage(productId, imageFile);
       } else if (removeExistingImage && product?.has_image) {
-        await api(`/${encodeURIComponent(brand)}/products/${productId}/image`, { method: "DELETE" });
+        await removeImage(productId);
       }
       toastStore.success(product ? "Product updated" : "Product added");
       onProductSaved?.();
@@ -135,7 +128,10 @@ export function ProductSheet({
       setImageFileError(null);
       return;
     }
-    if (selectedFile.size > MAX_IMAGE_BYTES || (selectedFile.type && !IMAGE_TYPES.has(selectedFile.type))) {
+    if (
+      selectedFile.size > MAX_IMAGE_BYTES ||
+      (selectedFile.type && !IMAGE_TYPES.has(selectedFile.type))
+    ) {
       setImageFile(null);
       setImageFileError("Use a JPEG, PNG, or WebP image up to 5 MB.");
       event.target.value = "";
@@ -146,7 +142,8 @@ export function ProductSheet({
     setRemoveExistingImage(false);
   }
 
-  const currentProductImageUrl = product && !removeExistingImage ? productImageSrc(product) : null;
+  const currentProductImageUrl =
+    product && !removeExistingImage ? productImageSrc(product) : null;
 
   function requestClose() {
     if (productForm.formState.isDirty || imageFile || removeExistingImage) {
@@ -158,12 +155,40 @@ export function ProductSheet({
 
   return (
     <>
-      <Sheet open={open} title={product ? "Edit product" : "Add product"} onClose={requestClose}>
-        <form className="space-y-4" onSubmit={productForm.handleSubmit((values) => void handleSaveProduct(values))} noValidate>
-          <Field label="Name" error={productForm.formState.errors.name?.message} {...productForm.register("name")} />
-          <Field label="Price" inputMode="decimal" error={productForm.formState.errors.price?.message} {...productForm.register("price")} />
-          <Field label="Stock" inputMode="numeric" error={productForm.formState.errors.quantity?.message} {...productForm.register("quantity")} />
-          <SelectField label="Category" error={productForm.formState.errors.category_id?.message} {...productForm.register("category_id")}>
+      <Sheet
+        open={open}
+        title={product ? "Edit product" : "Add product"}
+        onClose={requestClose}
+      >
+        <form
+          className="space-y-4"
+          onSubmit={productForm.handleSubmit(
+            (values) => void handleSaveProduct(values),
+          )}
+          noValidate
+        >
+          <Field
+            label="Name"
+            error={productForm.formState.errors.name?.message}
+            {...productForm.register("name")}
+          />
+          <Field
+            label="Price"
+            inputMode="decimal"
+            error={productForm.formState.errors.price?.message}
+            {...productForm.register("price")}
+          />
+          <Field
+            label="Stock"
+            inputMode="numeric"
+            error={productForm.formState.errors.quantity?.message}
+            {...productForm.register("quantity")}
+          />
+          <SelectField
+            label="Category"
+            error={productForm.formState.errors.category_id?.message}
+            {...productForm.register("category_id")}
+          >
             <option value="">Choose a category</option>
             {(categoriesQuery.data ?? []).map((category) => (
               <option key={category.id} value={category.id}>
@@ -181,9 +206,19 @@ export function ProductSheet({
             error={imageFileError ?? undefined}
             onChange={handleImageFileChange}
           />
-          {imagePreviewUrl ? <img src={imagePreviewUrl} alt="" className="aspect-[4/3] w-full object-cover" /> : null}
+          {imagePreviewUrl ? (
+            <img
+              src={imagePreviewUrl}
+              alt=""
+              className="aspect-[4/3] w-full object-cover"
+            />
+          ) : null}
           {!imagePreviewUrl && currentProductImageUrl ? (
-            <img src={currentProductImageUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+            <img
+              src={currentProductImageUrl}
+              alt=""
+              className="aspect-[4/3] w-full object-cover"
+            />
           ) : null}
           {product?.has_image ? (
             <label className="flex items-center gap-2 text-sm">
@@ -208,7 +243,9 @@ export function ProductSheet({
             <Button type="submit" busy={isSaving} busyLabel="Saving…">
               {product ? "Save changes" : "Add product"}
             </Button>
-            <Button variant="secondary" onClick={requestClose}>Cancel</Button>
+            <Button variant="secondary" onClick={requestClose}>
+              Cancel
+            </Button>
           </div>
         </form>
       </Sheet>

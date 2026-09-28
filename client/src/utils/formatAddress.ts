@@ -5,7 +5,9 @@ export function formatAddressLines(address: UserAddress | ShippingAddress) {
     address.recipient_name,
     address.line1,
     address.line2,
-    [address.city, address.state, address.postal_code].filter(Boolean).join(", "),
+    [address.city, address.state, address.postal_code]
+      .filter(Boolean)
+      .join(", "),
     address.country,
   ].filter(Boolean) as string[];
 

@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { api } from "@/services/api";
+import {
+  useStudioProducts,
+  useStudioProductActions,
+} from "@/hooks/useStudioProducts";
 import type { Product } from "@/services/types";
 import { useAuth } from "@/utils/authSession";
 import { Button } from "@/components/Button";
@@ -13,7 +16,6 @@ import { useFormatPrice } from "@/utils/currency";
 import { stockLabel } from "@/utils/stock";
 import { toastFailure, toastStore } from "@/utils/toast";
 import { useDocumentTitle } from "@/utils/title";
-import { useLoadData } from "@/utils/useLoadData";
 import { ProductSheet } from "@/pages/StudioProductSheet";
 import { StockSheet } from "@/pages/StudioStockSheet";
 
@@ -25,25 +27,28 @@ export function StudioPage() {
   const brandName = user?.tenant_name ?? "";
   const [currentPage, setCurrentPage] = useState(1);
   const [nameFilter, setNameFilter] = useState("");
-  const [productEditorState, setProductEditorState] = useState<Product | null | "new">(null);
-  const [productForStockUpdate, setProductForStockUpdate] = useState<Product | null>(null);
-  const [productPendingRemoval, setProductPendingRemoval] = useState<Product | null>(null);
-  const skipOffset = (currentPage - 1) * PRODUCTS_PER_PAGE;
-  const loadStudioProducts = useCallback(
-    () => api<Product[]>(`/${encodeURIComponent(brandName)}/products?skip=${skipOffset}&limit=${PRODUCTS_PER_PAGE + 1}`),
-    [brandName, skipOffset],
-  );
-  const studioProductsQuery = useLoadData(loadStudioProducts, { enabled: Boolean(brandName), showErrorToast: false });
-  const loadLowStockProducts = useCallback(
-    () => api<Product[]>(`/${encodeURIComponent(brandName)}/products/low-stock`),
-    [brandName],
-  );
-  const lowStockQuery = useLoadData(loadLowStockProducts, { enabled: Boolean(brandName), showErrorToast: false });
-  const productsOnPage = (studioProductsQuery.data ?? []).slice(0, PRODUCTS_PER_PAGE);
-  const hasNextPage = (studioProductsQuery.data?.length ?? 0) > PRODUCTS_PER_PAGE;
+  const [productEditorState, setProductEditorState] = useState<
+    Product | null | "new"
+  >(null);
+  const [productForStockUpdate, setProductForStockUpdate] =
+    useState<Product | null>(null);
+  const [productPendingRemoval, setProductPendingRemoval] =
+    useState<Product | null>(null);
+  const {
+    productsQuery: studioProductsQuery,
+    lowStockQuery,
+    productsOnPage,
+    hasNextPage,
+    reload,
+  } = useStudioProducts(brandName, currentPage, PRODUCTS_PER_PAGE);
+  const { removeProduct } = useStudioProductActions(brandName);
 
   useEffect(() => {
-    if (currentPage > 1 && studioProductsQuery.isSuccess && (studioProductsQuery.data?.length ?? 0) === 0) {
+    if (
+      currentPage > 1 &&
+      studioProductsQuery.isSuccess &&
+      (studioProductsQuery.data?.length ?? 0) === 0
+    ) {
       setCurrentPage((previousPage) => Math.max(1, previousPage - 1));
     }
   }, [currentPage, studioProductsQuery.data, studioProductsQuery.isSuccess]);
@@ -52,21 +57,27 @@ export function StudioPage() {
 
   const nameFilterLower = nameFilter.trim().toLowerCase();
   const filteredProductsOnPage = productsOnPage.filter(
-    (product) => !nameFilterLower || product.name.toLowerCase().includes(nameFilterLower),
+    (product) =>
+      !nameFilterLower || product.name.toLowerCase().includes(nameFilterLower),
   );
 
-  const totalUnitsOnPage = productsOnPage.reduce((sum, product) => sum + product.quantity, 0);
-  const lowStockCountOnPage = productsOnPage.filter((product) => product.quantity < 5).length;
+  const totalUnitsOnPage = productsOnPage.reduce(
+    (sum, product) => sum + product.quantity,
+    0,
+  );
+  const lowStockCountOnPage = productsOnPage.filter(
+    (product) => product.quantity < 5,
+  ).length;
 
   const [isRemovingProduct, setIsRemovingProduct] = useState(false);
 
   async function handleRemoveProduct(product: Product) {
     setIsRemovingProduct(true);
     try {
-      await api<void>(`/${encodeURIComponent(brandName)}/products/${product.id}`, { method: "DELETE" });
+      await removeProduct(product.id);
       setProductPendingRemoval(null);
       toastStore.success("Product removed");
-      await Promise.all([studioProductsQuery.reload(), lowStockQuery.reload()]);
+      await reload();
     } catch (error) {
       toastFailure(error);
     } finally {
@@ -75,20 +86,26 @@ export function StudioPage() {
   }
 
   function handleStudioCatalogChanged() {
-    void studioProductsQuery.reload();
-    void lowStockQuery.reload();
+    void reload();
   }
 
   return (
     <div className="px-5 py-8 md:px-10 lg:px-16">
       <div className="border border-olive bg-surface px-4 py-3 text-sm">
-        You are signed in as staff for {brandName}. You can manage only this brand.{" "}
-        <Link to="/" className="underline underline-offset-4">Shop as customer</Link>
+        You are signed in as staff for {brandName}. You can manage only this
+        brand.{" "}
+        <Link to="/" className="underline underline-offset-4">
+          Shop as customer
+        </Link>
       </div>
       <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">Brand studio</p>
-          <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">{brandName}</h1>
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+            Brand studio
+          </p>
+          <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">
+            {brandName}
+          </h1>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -97,25 +114,57 @@ export function StudioPage() {
           >
             Manage orders
           </Link>
-          <Button onClick={() => setProductEditorState("new")}>Add product</Button>
+          <Button onClick={() => setProductEditorState("new")}>
+            Add product
+          </Button>
         </div>
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <StudioStat label="On this page" value={String(studioProductsQuery.data ? productsOnPage.length : "—")} />
-        <StudioStat label="Units on this page" value={String(studioProductsQuery.data ? totalUnitsOnPage : "—")} />
-        <StudioStat label="Below 5 on this page" value={String(studioProductsQuery.data ? lowStockCountOnPage : "—")} />
+        <StudioStat
+          label="On this page"
+          value={String(studioProductsQuery.data ? productsOnPage.length : "—")}
+        />
+        <StudioStat
+          label="Units on this page"
+          value={String(studioProductsQuery.data ? totalUnitsOnPage : "—")}
+        />
+        <StudioStat
+          label="Below 5 on this page"
+          value={String(studioProductsQuery.data ? lowStockCountOnPage : "—")}
+        />
       </div>
-      {lowStockQuery.isSuccess && lowStockQuery.data && lowStockQuery.data.length > 0 ? (
-        <section aria-label="Low stock warning" role="status" className="mt-6 border border-amber-300 bg-amber-50 p-4 text-amber-950">
+      {lowStockQuery.isSuccess &&
+      lowStockQuery.data &&
+      lowStockQuery.data.length > 0 ? (
+        <section
+          aria-label="Low stock warning"
+          role="status"
+          className="mt-6 border border-amber-300 bg-amber-50 p-4 text-amber-950"
+        >
           <h2 className="text-sm font-semibold">Low stock — restock needed</h2>
           <p className="mt-1 text-sm">
-            {lowStockQuery.data.length} {lowStockQuery.data.length === 1 ? "product has" : "products have"} fewer than 5 units across {brandName}.
+            {lowStockQuery.data.length}{" "}
+            {lowStockQuery.data.length === 1 ? "product has" : "products have"}{" "}
+            fewer than 5 units across {brandName}.
           </p>
           <ul className="mt-3 max-h-64 space-y-3 overflow-y-auto">
             {lowStockQuery.data.map((product) => (
-              <li key={product.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span><span className="font-medium">{product.name}</span> · {product.quantity <= 0 ? "Out of stock" : `Only ${product.quantity} left`}</span>
-                <button type="button" className="shrink-0 underline underline-offset-4" aria-label={`Update stock for ${product.name}`} onClick={() => setProductForStockUpdate(product)}>
+              <li
+                key={product.id}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span>
+                  <span className="font-medium">{product.name}</span> ·{" "}
+                  {product.quantity <= 0
+                    ? "Out of stock"
+                    : `Only ${product.quantity} left`}
+                </span>
+                <button
+                  type="button"
+                  className="shrink-0 underline underline-offset-4"
+                  aria-label={`Update stock for ${product.name}`}
+                  onClick={() => setProductForStockUpdate(product)}
+                >
                   Update stock
                 </button>
               </li>
@@ -126,7 +175,9 @@ export function StudioPage() {
       {lowStockQuery.isError ? (
         <div className="mt-6 border border-line p-4 text-sm">
           <p>Stock warnings could not be loaded.</p>
-          <Button variant="text" onClick={() => void lowStockQuery.refetch()}>Try again</Button>
+          <Button variant="text" onClick={() => void lowStockQuery.refetch()}>
+            Try again
+          </Button>
         </div>
       ) : null}
       <div className="mt-6">
@@ -137,19 +188,44 @@ export function StudioPage() {
           aria-label="Filter this page"
           className="w-full max-w-md border border-line-strong bg-canvas px-3 py-2 text-sm outline-none focus:border-ink"
         />
-        {nameFilter ? <p className="mt-2 text-sm text-muted">Filtering products on this page.</p> : null}
+        {nameFilter ? (
+          <p className="mt-2 text-sm text-muted">
+            Filtering products on this page.
+          </p>
+        ) : null}
       </div>
-      {studioProductsQuery.isPending ? <Skeleton className="mt-6 h-64" /> : null}
+      {studioProductsQuery.isPending ? (
+        <Skeleton className="mt-6 h-64" />
+      ) : null}
       {studioProductsQuery.isError ? (
         <div className="mt-6">
           <Empty title="Products could not be loaded." />
-          <Button className="mt-4" variant="secondary" onClick={() => void studioProductsQuery.refetch()}>Try again</Button>
+          <Button
+            className="mt-4"
+            variant="secondary"
+            onClick={() => void studioProductsQuery.refetch()}
+          >
+            Try again
+          </Button>
         </div>
       ) : null}
       {studioProductsQuery.isSuccess && filteredProductsOnPage.length === 0 ? (
         <div className="mt-6">
-          <Empty title={nameFilter ? "No products match." : `No products for ${brandName} yet.`} />
-          {!nameFilter ? <Button className="mt-4" onClick={() => setProductEditorState("new")}>Add product</Button> : null}
+          <Empty
+            title={
+              nameFilter
+                ? "No products match."
+                : `No products for ${brandName} yet.`
+            }
+          />
+          {!nameFilter ? (
+            <Button
+              className="mt-4"
+              onClick={() => setProductEditorState("new")}
+            >
+              Add product
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {filteredProductsOnPage.length > 0 ? (
@@ -167,16 +243,43 @@ export function StudioPage() {
               </thead>
               <tbody>
                 {filteredProductsOnPage.map((product) => (
-                  <tr key={product.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-4 font-display text-xl">{product.name}</td>
+                  <tr
+                    key={product.id}
+                    className="border-b border-line last:border-0"
+                  >
+                    <td className="px-4 py-4 font-display text-xl">
+                      {product.name}
+                    </td>
                     <td className="px-4 py-4">{product.category_name}</td>
-                    <td className="px-4 py-4 tabular-nums">{formatPrice(product.price)}</td>
-                    <td className="px-4 py-4">{stockLabel(product.quantity).text}</td>
+                    <td className="px-4 py-4 tabular-nums">
+                      {formatPrice(product.price)}
+                    </td>
+                    <td className="px-4 py-4">
+                      {stockLabel(product.quantity).text}
+                    </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-3">
-                        <button type="button" className="interactive-muted uppercase tracking-[0.08em]" onClick={() => setProductForStockUpdate(product)}>Update stock</button>
-                        <button type="button" className="interactive-muted uppercase tracking-[0.08em]" onClick={() => setProductEditorState(product)}>Edit</button>
-                        <button type="button" className="interactive-muted uppercase tracking-[0.08em] text-danger" onClick={() => setProductPendingRemoval(product)}>Remove</button>
+                        <button
+                          type="button"
+                          className="interactive-muted uppercase tracking-[0.08em]"
+                          onClick={() => setProductForStockUpdate(product)}
+                        >
+                          Update stock
+                        </button>
+                        <button
+                          type="button"
+                          className="interactive-muted uppercase tracking-[0.08em]"
+                          onClick={() => setProductEditorState(product)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="interactive-muted uppercase tracking-[0.08em] text-danger"
+                          onClick={() => setProductPendingRemoval(product)}
+                        >
+                          Remove
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -187,13 +290,36 @@ export function StudioPage() {
           <ul className="mt-6 space-y-4 md:hidden">
             {filteredProductsOnPage.map((product) => (
               <li key={product.id} className="border border-line p-4">
-                <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-clay">{product.category_name}</p>
+                <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-clay">
+                  {product.category_name}
+                </p>
                 <p className="mt-1 font-display text-2xl">{product.name}</p>
-                <p className="mt-2 text-sm tabular-nums">{formatPrice(product.price)} · {stockLabel(product.quantity).text}</p>
+                <p className="mt-2 text-sm tabular-nums">
+                  {formatPrice(product.price)} ·{" "}
+                  {stockLabel(product.quantity).text}
+                </p>
                 <div className="mt-4 flex flex-wrap gap-3 text-[0.6875rem] uppercase tracking-[0.08em]">
-                  <button type="button" className="interactive-muted" onClick={() => setProductForStockUpdate(product)}>Update stock</button>
-                  <button type="button" className="interactive-muted" onClick={() => setProductEditorState(product)}>Edit</button>
-                  <button type="button" className="interactive-muted text-danger" onClick={() => setProductPendingRemoval(product)}>Remove</button>
+                  <button
+                    type="button"
+                    className="interactive-muted"
+                    onClick={() => setProductForStockUpdate(product)}
+                  >
+                    Update stock
+                  </button>
+                  <button
+                    type="button"
+                    className="interactive-muted"
+                    onClick={() => setProductEditorState(product)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="interactive-muted text-danger"
+                    onClick={() => setProductPendingRemoval(product)}
+                  >
+                    Remove
+                  </button>
                 </div>
               </li>
             ))}
@@ -222,7 +348,11 @@ export function StudioPage() {
       <Confirm
         open={productPendingRemoval !== null}
         title="Remove product"
-        body={productPendingRemoval ? `Remove ${productPendingRemoval.name}? This cannot be undone.` : ""}
+        body={
+          productPendingRemoval
+            ? `Remove ${productPendingRemoval.name}? This cannot be undone.`
+            : ""
+        }
         confirmLabel="Remove"
         destructive
         busy={isRemovingProduct}
@@ -241,8 +371,9 @@ function StudioStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-line bg-surface p-4">
       <p className="font-display text-3xl">{value}</p>
-      <p className="mt-1 text-[0.6875rem] uppercase tracking-[0.12em] text-muted">{label}</p>
+      <p className="mt-1 text-[0.6875rem] uppercase tracking-[0.12em] text-muted">
+        {label}
+      </p>
     </div>
   );
 }
-

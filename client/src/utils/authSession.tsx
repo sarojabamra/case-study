@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { api, clearSession, restoreSession, setSession, setSessionExpiredHandler } from "@/services/api";
+import {
+  api,
+  clearSession,
+  restoreSession,
+  setSession,
+  setSessionExpiredHandler,
+} from "@/services/api";
 import type { Me, Tokens } from "@/services/types";
 import { toastStore } from "@/utils/toast";
 
@@ -55,7 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (path === "/login" || path.endsWith("/login")) {
         return;
       }
-      const returnPath = encodeURIComponent(`${path}${locationRef.current.search}`);
+      const returnPath = encodeURIComponent(
+        `${path}${locationRef.current.search}`,
+      );
       navigate(`/login?next=${returnPath}`, { replace: true });
     });
   }, [navigate]);
@@ -173,7 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
   };
 
-  return <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={authContextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

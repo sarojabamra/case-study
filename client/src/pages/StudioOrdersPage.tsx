@@ -9,7 +9,11 @@ import { Pagination } from "@/components/Pagination";
 import { Empty } from "@/components/SystemState";
 import { Skeleton } from "@/components/Skeleton";
 import { useFormatPrice } from "@/utils/currency";
-import { formatOrderStatus, formatReturnStatus, tenantStatusOptions } from "@/utils/orderStatus";
+import {
+  formatOrderStatus,
+  formatReturnStatus,
+  tenantStatusOptions,
+} from "@/utils/orderStatus";
 import { toastFailure, toastStore } from "@/utils/toast";
 import { useDocumentTitle } from "@/utils/title";
 import { useLoadData } from "@/utils/useLoadData";
@@ -22,7 +26,10 @@ export function StudioOrdersPage() {
   const [busyOrderId, setBusyOrderId] = useState<number | null>(null);
 
   const loadOrders = useCallback(
-    () => api<OrderPage>(`/${encodeURIComponent(brandName)}/orders?page=${page}&limit=10`),
+    () =>
+      api<OrderPage>(
+        `/${encodeURIComponent(brandName)}/orders?page=${page}&limit=10`,
+      ),
     [brandName, page],
   );
   const ordersQuery = useLoadData(loadOrders, { enabled: Boolean(brandName) });
@@ -32,11 +39,16 @@ export function StudioOrdersPage() {
   async function updateOrderStatus(orderId: number, status: string) {
     setBusyOrderId(orderId);
     try {
-      await api<Order>(`/${encodeURIComponent(brandName)}/orders/${orderId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-      toastStore.success(`Order #${orderId} marked ${formatOrderStatus(status)}`);
+      await api<Order>(
+        `/${encodeURIComponent(brandName)}/orders/${orderId}/status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        },
+      );
+      toastStore.success(
+        `Order #${orderId} marked ${formatOrderStatus(status)}`,
+      );
       await ordersQuery.reload();
     } catch (error) {
       toastFailure(error);
@@ -45,14 +57,22 @@ export function StudioOrdersPage() {
     }
   }
 
-  async function decideReturn(orderId: number, returnStatus: "approved" | "rejected") {
+  async function decideReturn(
+    orderId: number,
+    returnStatus: "approved" | "rejected",
+  ) {
     setBusyOrderId(orderId);
     try {
-      await api<Order>(`/${encodeURIComponent(brandName)}/orders/${orderId}/return`, {
-        method: "PATCH",
-        body: JSON.stringify({ return_status: returnStatus }),
-      });
-      toastStore.success(`Return ${returnStatus === "approved" ? "approved" : "declined"}`);
+      await api<Order>(
+        `/${encodeURIComponent(brandName)}/orders/${orderId}/return`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ return_status: returnStatus }),
+        },
+      );
+      toastStore.success(
+        `Return ${returnStatus === "approved" ? "approved" : "declined"}`,
+      );
       await ordersQuery.reload();
     } catch (error) {
       toastFailure(error);
@@ -64,15 +84,23 @@ export function StudioOrdersPage() {
   return (
     <div className="px-5 py-8 md:px-10 lg:px-16">
       <div className="border border-olive bg-surface px-4 py-3 text-sm">
-        <Link to={`/${encodeURIComponent(brandName)}/studio`} className="underline underline-offset-4">
+        <Link
+          to={`/${encodeURIComponent(brandName)}/studio`}
+          className="underline underline-offset-4"
+        >
           Back to {brandName} studio
         </Link>
       </div>
       <div className="mt-8">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">Fulfillment</p>
-        <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">Orders for {brandName}</h1>
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+          Fulfillment
+        </p>
+        <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">
+          Orders for {brandName}
+        </h1>
         <p className="mt-3 max-w-2xl text-muted">
-          Update order status for shipments that include your products. Approve or decline return requests after delivery.
+          Update order status for shipments that include your products. Approve
+          or decline return requests after delivery.
         </p>
       </div>
 
@@ -80,7 +108,13 @@ export function StudioOrdersPage() {
       {ordersQuery.isError ? (
         <div className="mt-8">
           <Empty title="Orders could not be loaded." />
-          <Button className="mt-4" variant="secondary" onClick={() => void ordersQuery.reload()}>Try again</Button>
+          <Button
+            className="mt-4"
+            variant="secondary"
+            onClick={() => void ordersQuery.reload()}
+          >
+            Try again
+          </Button>
         </div>
       ) : null}
 
@@ -98,16 +132,21 @@ export function StudioOrdersPage() {
             <li key={order.id} className="border border-line bg-surface p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <p className="font-display text-2xl">Order #{order.id}</p>
-                <p className="text-sm tabular-nums">{formatPrice(order.total_amount)}</p>
+                <p className="text-sm tabular-nums">
+                  {formatPrice(order.total_amount)}
+                </p>
               </div>
               <p className="mt-2 text-sm text-muted">
                 {formatOrderStatus(order.status)}
-                {order.return_status ? ` · ${formatReturnStatus(order.return_status)}` : ""}
+                {order.return_status
+                  ? ` · ${formatReturnStatus(order.return_status)}`
+                  : ""}
               </p>
               <ul className="mt-4 space-y-1 text-sm">
                 {order.items.map((line) => (
                   <li key={line.id}>
-                    {line.product_name ?? `Product ${line.product_id}`} · {line.quantity} · {formatPrice(line.price)}
+                    {line.product_name ?? `Product ${line.product_id}`} ·{" "}
+                    {line.quantity} · {formatPrice(line.price)}
                   </li>
                 ))}
               </ul>
@@ -125,10 +164,20 @@ export function StudioOrdersPage() {
                   ))}
                 </div>
               ) : null}
-              {order.status === "delivered" && order.return_status === "requested" ? (
+              {order.status === "delivered" &&
+              order.return_status === "requested" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button busy={isBusy} onClick={() => void decideReturn(order.id, "approved")}>Approve return</Button>
-                  <Button variant="secondary" busy={isBusy} onClick={() => void decideReturn(order.id, "rejected")}>
+                  <Button
+                    busy={isBusy}
+                    onClick={() => void decideReturn(order.id, "approved")}
+                  >
+                    Approve return
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    busy={isBusy}
+                    onClick={() => void decideReturn(order.id, "rejected")}
+                  >
                     Decline return
                   </Button>
                 </div>

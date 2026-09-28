@@ -35,16 +35,33 @@ export function ProductPage() {
     () => api<Product>(`/products/${productId}`),
     [productId],
   );
-  const productQuery = useLoadData(loadProduct, { enabled: productIdIsValid, showErrorToast: false });
+  const productQuery = useLoadData(loadProduct, {
+    enabled: productIdIsValid,
+    showErrorToast: false,
+  });
 
   useEffect(() => {
     setQuantityToAdd(1);
   }, [productId]);
 
-  useDocumentTitle(productQuery.data ? `${productQuery.data.name} · E-commerce` : null);
+  useDocumentTitle(
+    productQuery.data ? `${productQuery.data.name} · E-commerce` : null,
+  );
 
-  if (!Number.isInteger(productId) || productId <= 0 || (productQuery.isError && productQuery.error instanceof ApiError && productQuery.error.status === 404)) {
-    return <SystemState title="Product not found." body="That piece is not in the catalogue." action={{ href: "/", label: "Back to store" }} />;
+  if (
+    !Number.isInteger(productId) ||
+    productId <= 0 ||
+    (productQuery.isError &&
+      productQuery.error instanceof ApiError &&
+      productQuery.error.status === 404)
+  ) {
+    return (
+      <SystemState
+        title="Product not found."
+        body="That piece is not in the catalogue."
+        action={{ href: "/", label: "Back to store" }}
+      />
+    );
   }
 
   if (productQuery.isPending) {
@@ -57,12 +74,20 @@ export function ProductPage() {
   }
 
   if (!productQuery.data) {
-    return <SystemState title="The product could not be loaded." body="Try the catalogue again." action={{ href: "/", label: "Back to store" }} />;
+    return (
+      <SystemState
+        title="The product could not be loaded."
+        body="Try the catalogue again."
+        action={{ href: "/", label: "Back to store" }}
+      />
+    );
   }
 
   const product = productQuery.data;
   const stockStatus = stockLabel(product.quantity);
-  const isSavedAsFavourite = (favouritesQuery.data ?? []).some((favourite) => favourite.id === product.id);
+  const isSavedAsFavourite = (favouritesQuery.data ?? []).some(
+    (favourite) => favourite.id === product.id,
+  );
 
   function handleAddToCart() {
     const addResult = addProductToCart(product, quantityToAdd);
@@ -78,9 +103,13 @@ export function ProductPage() {
     <div className="px-5 py-8 md:px-10 lg:px-16">
       {favouriteActions.removeFavouriteConfirmDialog}
       {product.tenant_name ? (
-        <p className="font-display text-3xl font-light md:text-4xl">{product.tenant_name}</p>
+        <p className="font-display text-3xl font-light md:text-4xl">
+          {product.tenant_name}
+        </p>
       ) : null}
-      <p className={`text-[0.6875rem] uppercase tracking-[0.12em] text-muted ${product.tenant_name ? "mt-4" : ""}`}>
+      <p
+        className={`text-[0.6875rem] uppercase tracking-[0.12em] text-muted ${product.tenant_name ? "mt-4" : ""}`}
+      >
         <Link to="/">Home</Link>
         {" / "}
         {product.category_name ?? "Category"}
@@ -92,15 +121,31 @@ export function ProductPage() {
           <ProductPlate product={product} className="border border-line" />
           <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">{product.category_name}</p>
-              <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">{product.name}</h1>
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-clay">
+                {product.category_name}
+              </p>
+              <h1 className="mt-2 font-display text-4xl font-light md:text-5xl">
+                {product.name}
+              </h1>
               <p className="mt-2 text-sm">
-                Sold by <Link to={`/?brand=${product.tenant_id}`} className="underline underline-offset-4">{product.tenant_name}</Link>
+                Sold by{" "}
+                <Link
+                  to={`/?brand=${product.tenant_id}`}
+                  className="underline underline-offset-4"
+                >
+                  {product.tenant_name}
+                </Link>
               </p>
             </div>
-            <p className="font-display text-3xl tabular-nums">{formatPrice(product.price)}</p>
+            <p className="font-display text-3xl tabular-nums">
+              {formatPrice(product.price)}
+            </p>
           </div>
-          <p className={`mt-4 text-sm ${stockStatus.tone === "ok" ? "text-olive" : "text-clay"}`}>{stockStatus.text}</p>
+          <p
+            className={`mt-4 text-sm ${stockStatus.tone === "ok" ? "text-olive" : "text-clay"}`}
+          >
+            {stockStatus.text}
+          </p>
           {product.quantity > 0 ? (
             <div className="mt-6 hidden lg:block">
               <div className="flex items-center gap-4">
@@ -113,17 +158,33 @@ export function ProductPage() {
                   }}
                 />
                 <Button onClick={handleAddToCart}>Add to cart</Button>
-                <Button variant="secondary" onClick={() => favouriteActions.toggleFavourite(product, isSavedAsFavourite)}>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    favouriteActions.toggleFavourite(
+                      product,
+                      isSavedAsFavourite,
+                    )
+                  }
+                >
                   {isSavedAsFavourite ? "Saved" : "Save"}
                 </Button>
               </div>
               <FormMessage message={addToCartError} />
             </div>
           ) : (
-            <p className="mt-6 border border-danger-bg bg-danger-bg px-4 py-3 text-sm text-on-danger">Out of stock.</p>
+            <p className="mt-6 border border-danger-bg bg-danger-bg px-4 py-3 text-sm text-on-danger">
+              Out of stock.
+            </p>
           )}
           {product.quantity === 0 ? (
-            <Button className="mt-4" variant="secondary" onClick={() => favouriteActions.toggleFavourite(product, isSavedAsFavourite)}>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() =>
+                favouriteActions.toggleFavourite(product, isSavedAsFavourite)
+              }
+            >
               {isSavedAsFavourite ? "Saved" : "Save"}
             </Button>
           ) : null}
@@ -147,7 +208,13 @@ export function ProductPage() {
             <Button className="flex-1" onClick={handleAddToCart}>
               Add · {formatPrice(product.price)}
             </Button>
-            <Button variant="secondary" onClick={() => favouriteActions.toggleFavourite(product, isSavedAsFavourite)} aria-label={isSavedAsFavourite ? "Saved" : "Save"}>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                favouriteActions.toggleFavourite(product, isSavedAsFavourite)
+              }
+              aria-label={isSavedAsFavourite ? "Saved" : "Save"}
+            >
               {isSavedAsFavourite ? "♥" : "♡"}
             </Button>
           </div>

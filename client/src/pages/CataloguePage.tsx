@@ -15,7 +15,12 @@ import { useLoadData } from "@/utils/useLoadData";
 
 type SortMode = "listed" | "price-asc" | "price-desc" | "stock";
 
-const SORT_MODES = new Set<SortMode>(["listed", "price-asc", "price-desc", "stock"]);
+const SORT_MODES = new Set<SortMode>([
+  "listed",
+  "price-asc",
+  "price-desc",
+  "stock",
+]);
 
 function parseSortMode(value: string | null): SortMode {
   if (value && SORT_MODES.has(value as SortMode)) {
@@ -70,7 +75,9 @@ export function CataloguePage() {
 
   useEffect(() => {
     if (window.location.hash === "#filters") {
-      document.getElementById("filters")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("filters")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, []);
 
@@ -80,7 +87,9 @@ export function CataloguePage() {
       skipFirstProductsScroll.current = false;
       return;
     }
-    document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById("products")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [page, categoryId, sortMode]);
 
   useEffect(() => {
@@ -106,20 +115,29 @@ export function CataloguePage() {
   }, [searchDraft, searchQuery, setSearchParams]);
 
   const loadProducts = useCallback(
-    () => api<ProductPage>(buildCatalogueApiPath(searchQuery, categoryId, brandId, page, sortMode)),
+    () =>
+      api<ProductPage>(
+        buildCatalogueApiPath(searchQuery, categoryId, brandId, page, sortMode),
+      ),
     [searchQuery, categoryId, brandId, page, sortMode],
   );
-  const loadCategories = useCallback(() => api<Category[]>("/products/categories"), []);
+  const loadCategories = useCallback(
+    () => api<Category[]>("/products/categories"),
+    [],
+  );
   const loadBrands = useCallback(() => api<Brand[]>("/brands"), []);
 
   const productsQuery = useLoadData(loadProducts);
   const categoriesQuery = useLoadData(loadCategories);
   const brandsQuery = useLoadData(loadBrands, { enabled: Boolean(brandId) });
   const selectedBrandName =
-    brandsQuery.data?.find((brand) => String(brand.id) === brandId)?.name ?? "This brand";
+    brandsQuery.data?.find((brand) => String(brand.id) === brandId)?.name ??
+    "This brand";
 
   const visibleProducts = productsQuery.data?.products ?? [];
-  const savedProductIds = new Set((favouritesQuery.data ?? []).map((product) => product.id));
+  const savedProductIds = new Set(
+    (favouritesQuery.data ?? []).map((product) => product.id),
+  );
   const hasActiveFilters = Boolean(searchQuery || categoryId || brandId);
 
   function updateSearchParam(key: string, value: string) {
@@ -160,9 +178,13 @@ export function CataloguePage() {
       {favouriteActions.removeFavouriteConfirmDialog}
       <section className="px-5 pt-8 pb-6 md:px-10 lg:px-16">
         {brandId ? (
-          <p className="font-display text-3xl font-light md:text-4xl">{selectedBrandName}</p>
+          <p className="font-display text-3xl font-light md:text-4xl">
+            {selectedBrandName}
+          </p>
         ) : null}
-        <h1 className={`font-semibold ${brandId ? "mt-2 text-lg text-muted" : "text-2xl"}`}>
+        <h1
+          className={`font-semibold ${brandId ? "mt-2 text-lg text-muted" : "text-2xl"}`}
+        >
           {brandId ? "Products" : "Products"}
         </h1>
         <p className="mt-2 max-w-2xl text-muted">
@@ -198,7 +220,9 @@ export function CataloguePage() {
             Sort
             <select
               value={sortMode}
-              onChange={(event) => updateSortMode(event.target.value as SortMode)}
+              onChange={(event) =>
+                updateSortMode(event.target.value as SortMode)
+              }
               className="border border-line-strong bg-canvas px-2 py-2 text-sm text-ink normal-case"
             >
               <option value="listed">As listed</option>
@@ -213,26 +237,42 @@ export function CataloguePage() {
                 {selectedBrandName} · Clear
               </Chip>
             ) : null}
-            <Chip active={!categoryId} onClick={() => updateSearchParam("category", "")}>
+            <Chip
+              active={!categoryId}
+              onClick={() => updateSearchParam("category", "")}
+            >
               All
             </Chip>
             {(categoriesQuery.data ?? []).map((category) => (
               <Chip
                 key={category.id}
                 active={categoryId === String(category.id)}
-                onClick={() => updateSearchParam("category", String(category.id))}
+                onClick={() =>
+                  updateSearchParam("category", String(category.id))
+                }
               >
                 {category.name}
               </Chip>
             ))}
           </div>
-          {categoriesQuery.isError ? <p className="text-sm text-muted">Categories could not be loaded.</p> : null}
+          {categoriesQuery.isError ? (
+            <p className="text-sm text-muted">
+              Categories could not be loaded.
+            </p>
+          ) : null}
         </div>
       </section>
-      <section id="products" className="scroll-mt-36 px-5 py-8 md:px-10 lg:px-16">
+      <section
+        id="products"
+        className="scroll-mt-36 px-5 py-8 md:px-10 lg:px-16"
+      >
         <div className="mb-6 flex items-baseline justify-between gap-4">
           <h2 className="text-lg font-semibold">
-            {searchQuery ? `Results for “${searchQuery}”` : brandId ? selectedBrandName : "All products"}
+            {searchQuery
+              ? `Results for “${searchQuery}”`
+              : brandId
+                ? selectedBrandName
+                : "All products"}
           </h2>
           <p className="text-sm text-muted">
             {productsQuery.data
@@ -242,13 +282,24 @@ export function CataloguePage() {
         </div>
         {productsQuery.isPending ? <ProductGridSkeleton /> : null}
         {productsQuery.isError ? (
-          <Empty title="The catalogue could not be loaded." action={{ href: "/", label: "Try again" }} />
+          <Empty
+            title="The catalogue could not be loaded."
+            action={{ href: "/", label: "Try again" }}
+          />
         ) : null}
         {productsQuery.data && visibleProducts.length === 0 ? (
           <div>
-            <Empty title={hasActiveFilters ? "No products match." : "No products yet."} />
+            <Empty
+              title={
+                hasActiveFilters ? "No products match." : "No products yet."
+              }
+            />
             {hasActiveFilters ? (
-              <Button className="mt-4" variant="secondary" onClick={clearAllFilters}>
+              <Button
+                className="mt-4"
+                variant="secondary"
+                onClick={clearAllFilters}
+              >
                 Clear filters
               </Button>
             ) : null}

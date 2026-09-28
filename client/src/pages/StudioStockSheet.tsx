@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { api } from "@/services/api";
+import { useStudioProductActions } from "@/hooks/useStudioProducts";
 import type { Product } from "@/services/types";
 import { Button } from "@/components/Button";
 import { Sheet } from "@/components/Modal";
@@ -24,6 +24,7 @@ export function StockSheet({
   onClose: () => void;
   onStockUpdated?: () => void;
 }) {
+  const { updateProduct } = useStudioProductActions(brand);
   const stockForm = useForm<{ quantity: string }>({
     resolver: zodResolver(stockFormSchema),
     defaultValues: { quantity: "" },
@@ -43,10 +44,7 @@ export function StockSheet({
     }
     setIsSaving(true);
     try {
-      await api(`/${encodeURIComponent(brand)}/products/${product.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ quantity: Number(quantity) }),
-      });
+      await updateProduct(product.id, { quantity: Number(quantity) });
       toastStore.success("Stock updated");
       onStockUpdated?.();
       onClose();
@@ -64,20 +62,36 @@ export function StockSheet({
       <p className="text-sm text-muted">{product?.name}</p>
       <form
         className="mt-4 space-y-4"
-        onSubmit={stockForm.handleSubmit((values) => void handleUpdateStock(values.quantity))}
+        onSubmit={stockForm.handleSubmit(
+          (values) => void handleUpdateStock(values.quantity),
+        )}
         noValidate
       >
         <Stepper
           min={0}
           max={100000}
           value={Number.isNaN(currentQuantity) ? 0 : currentQuantity}
-          onChange={(value) => stockForm.setValue("quantity", String(value), { shouldValidate: true, shouldDirty: true })}
+          onChange={(value) =>
+            stockForm.setValue("quantity", String(value), {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+          }
           label="Stock"
         />
         {stockForm.formState.errors.quantity?.message ? (
-          <p role="alert" className="text-sm text-danger">{stockForm.formState.errors.quantity.message}</p>
+          <p role="alert" className="text-sm text-danger">
+            {stockForm.formState.errors.quantity.message}
+          </p>
         ) : null}
-        <Button className="ms-2" type="submit" busy={isSaving} busyLabel="Saving…">Update stock</Button>
+        <Button
+          className="ms-2"
+          type="submit"
+          busy={isSaving}
+          busyLabel="Saving…"
+        >
+          Update stock
+        </Button>
       </form>
     </Sheet>
   );

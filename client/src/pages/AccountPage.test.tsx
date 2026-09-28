@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -42,7 +48,7 @@ const officeAddress: UserAddress = {
   is_default: false,
 };
 
-const refreshUser = jest.fn<() => Promise<Me | null>>();
+const refreshUser = jest.fn<Promise<Me | null>, []>();
 const apiMock = jest.fn();
 
 jest.mock("@/utils/authSession", () => ({
@@ -93,65 +99,81 @@ beforeEach(() => {
   jest.clearAllMocks();
   refreshUser.mockResolvedValue(mockUser);
 
-  apiMock.mockImplementation(async (path: string, options?: { method?: string; body?: string }) => {
-    const method = options?.method ?? "GET";
+  apiMock.mockImplementation(
+    async (path: string, options?: { method?: string; body?: string }) => {
+      const method = options?.method ?? "GET";
 
-    if (path === "/addresses/" && method === "GET") {
-      return addressesResponse([homeAddress, officeAddress]);
-    }
+      if (path === "/addresses/" && method === "GET") {
+        return addressesResponse([homeAddress, officeAddress]);
+      }
 
-    if (path === "/auth/me" && method === "PATCH") {
-      return { ...mockUser, full_name: JSON.parse(options!.body!).full_name };
-    }
+      if (path === "/auth/me" && method === "PATCH") {
+        return { ...mockUser, full_name: JSON.parse(options!.body!).full_name };
+      }
 
-    if (path === "/auth/change-password" && method === "POST") {
-      return { message: "Password updated successfully" };
-    }
+      if (path === "/auth/change-password" && method === "POST") {
+        return { message: "Password updated successfully" };
+      }
 
-    if (path.startsWith("/addresses/") && method === "PUT") {
-      const id = Number(path.split("/").pop());
-      const body = options?.body ? JSON.parse(options.body) : {};
-      const base = id === homeAddress.id ? homeAddress : officeAddress;
-      return { ...base, ...body };
-    }
+      if (path.startsWith("/addresses/") && method === "PUT") {
+        const id = Number(path.split("/").pop());
+        const body = options?.body ? JSON.parse(options.body) : {};
+        const base = id === homeAddress.id ? homeAddress : officeAddress;
+        return { ...base, ...body };
+      }
 
-    if (path.startsWith("/addresses/") && method === "DELETE") {
-      return undefined;
-    }
+      if (path.startsWith("/addresses/") && method === "DELETE") {
+        return undefined;
+      }
 
-    if (path === "/addresses/" && method === "POST") {
-      const body = JSON.parse(options!.body!);
-      return {
-        id: 99,
-        label: body.label,
-        recipient_name: body.recipient_name,
-        line1: body.line1,
-        line2: body.line2,
-        city: body.city,
-        state: body.state,
-        postal_code: body.postal_code,
-        country: body.country,
-        phone: body.phone,
-        is_default: body.is_default,
-      } satisfies UserAddress;
-    }
+      if (path === "/addresses/" && method === "POST") {
+        const body = JSON.parse(options!.body!);
+        return {
+          id: 99,
+          label: body.label,
+          recipient_name: body.recipient_name,
+          line1: body.line1,
+          line2: body.line2,
+          city: body.city,
+          state: body.state,
+          postal_code: body.postal_code,
+          country: body.country,
+          phone: body.phone,
+          is_default: body.is_default,
+        } satisfies UserAddress;
+      }
 
-    throw new Error(`Unhandled api mock: ${method} ${path}`);
-  });
+      throw new Error(`Unhandled api mock: ${method} ${path}`);
+    },
+  );
 });
 
 describe("AccountPage", () => {
   it("shows only profile, addresses, and password sections", async () => {
     renderAccountPage();
 
-    expect(await screen.findByRole("heading", { name: "Your account" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Saved addresses" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Password" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your account" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Profile" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Saved addresses" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Password" }),
+    ).toBeInTheDocument();
 
-    expect(screen.queryByRole("link", { name: /orders/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /favourites/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /log out/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /orders/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /favourites/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /log out/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("saves profile changes", async () => {
@@ -178,7 +200,9 @@ describe("AccountPage", () => {
     expect(await screen.findByText("Home")).toBeInTheDocument();
     expect(screen.getByText("Office")).toBeInTheDocument();
     expect(screen.getByText("Default")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Set as default" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Set as default" }),
+    ).toBeInTheDocument();
   });
 
   it("sets another address as default", async () => {
@@ -203,13 +227,17 @@ describe("AccountPage", () => {
     await screen.findByText("Office");
     const officeCard = screen.getByText("Office").closest("li");
     expect(officeCard).not.toBeNull();
-    await user.click(within(officeCard!).getByRole("button", { name: "Remove" }));
+    await user.click(
+      within(officeCard!).getByRole("button", { name: "Remove" }),
+    );
 
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Remove" }));
 
     await waitFor(() => {
-      expect(apiMock).toHaveBeenCalledWith(`/addresses/${officeAddress.id}`, { method: "DELETE" });
+      expect(apiMock).toHaveBeenCalledWith(`/addresses/${officeAddress.id}`, {
+        method: "DELETE",
+      });
     });
   });
 
@@ -236,28 +264,30 @@ describe("AccountPage", () => {
 
   it("creates a new address from the address form", async () => {
     const user = userEvent.setup();
-    apiMock.mockImplementation(async (path: string, options?: { method?: string; body?: string }) => {
-      const method = options?.method ?? "GET";
-      if (path === "/addresses/" && method === "GET") {
-        return addressesResponse([]);
-      }
-      if (path === "/addresses/" && method === "POST") {
-        return {
-          id: 99,
-          label: "Work",
-          recipient_name: "Test User",
-          line1: "1 Market Road",
-          line2: null,
-          city: "Delhi",
-          state: "Delhi",
-          postal_code: "110001",
-          country: "IN",
-          phone: null,
-          is_default: true,
-        } satisfies UserAddress;
-      }
-      throw new Error(`Unhandled api mock: ${method} ${path}`);
-    });
+    apiMock.mockImplementation(
+      async (path: string, options?: { method?: string; body?: string }) => {
+        const method = options?.method ?? "GET";
+        if (path === "/addresses/" && method === "GET") {
+          return addressesResponse([]);
+        }
+        if (path === "/addresses/" && method === "POST") {
+          return {
+            id: 99,
+            label: "Work",
+            recipient_name: "Test User",
+            line1: "1 Market Road",
+            line2: null,
+            city: "Delhi",
+            state: "Delhi",
+            postal_code: "110001",
+            country: "IN",
+            phone: null,
+            is_default: true,
+          } satisfies UserAddress;
+        }
+        throw new Error(`Unhandled api mock: ${method} ${path}`);
+      },
+    );
 
     renderAccountPage();
 

@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { api } from "@/services/api";
 import type { ApiCartLine, CartResponse, Product } from "@/services/types";
@@ -20,7 +27,10 @@ export type CartItem = {
 type CartContextValue = {
   cartItems: CartItem[];
   count: number;
-  addProductToCart: (product: Product, quantity: number) => { ok: true } | { ok: false; message: string };
+  addProductToCart: (
+    product: Product,
+    quantity: number,
+  ) => { ok: true } | { ok: false; message: string };
   setCartItemQuantity: (productId: number, quantity: number) => void;
   removeCartItem: (productId: number) => void;
   clearCart: () => void;
@@ -102,7 +112,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const response = await api<CartResponse>("/cart/", {
       method: "PUT",
       body: JSON.stringify({
-        items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+        items: items.map((item) => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+        })),
       }),
     });
     return response.items.map(mapApiCartLine);
@@ -194,11 +207,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const count = cartItems.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
 
-  function addProductToCart(product: Product, quantity: number): { ok: true } | { ok: false; message: string } {
+  function addProductToCart(
+    product: Product,
+    quantity: number,
+  ): { ok: true } | { ok: false; message: string } {
     if (product.quantity <= 0 || quantity < 1) {
       return { ok: false, message: "Out of stock." };
     }
-    const existingItem = cartItems.find((cartItem) => cartItem.productId === product.id);
+    const existingItem = cartItems.find(
+      (cartItem) => cartItem.productId === product.id,
+    );
     const nextQuantity = (existingItem?.quantity ?? 0) + quantity;
     if (nextQuantity > product.quantity) {
       return { ok: false, message: `Only ${product.quantity} left.` };
@@ -212,7 +230,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       available: product.quantity,
     };
     setCartItems((currentCartItems) => {
-      const otherItems = currentCartItems.filter((cartItem) => cartItem.productId !== product.id);
+      const otherItems = currentCartItems.filter(
+        (cartItem) => cartItem.productId !== product.id,
+      );
       return [...otherItems, updatedItem];
     });
     return { ok: true };
@@ -234,7 +254,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   function removeCartItem(productId: number) {
-    setCartItems((currentCartItems) => currentCartItems.filter((cartItem) => cartItem.productId !== productId));
+    setCartItems((currentCartItems) =>
+      currentCartItems.filter((cartItem) => cartItem.productId !== productId),
+    );
   }
 
   function clearCart() {
@@ -275,7 +297,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     updateCartItemFromProductStock,
   };
 
-  return <CartContext.Provider value={cartContextValue}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={cartContextValue}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart() {

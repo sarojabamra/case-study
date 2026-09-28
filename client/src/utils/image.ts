@@ -1,7 +1,9 @@
 import { API_BASE } from "@/services/api";
 import type { Product } from "@/services/types";
 
-export function productImageSrc(product: Pick<Product, "id" | "has_image" | "image_version">): string | null {
+export function productImageSrc(
+  product: Pick<Product, "id" | "has_image" | "image_version">,
+): string | null {
   if (!product.has_image || !product.image_version) {
     return null;
   }

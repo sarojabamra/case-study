@@ -11,20 +11,26 @@ export function useFavourites() {
   const { user, status } = useAuth();
   const enabled = status === "ready" && Boolean(user);
 
-  const loadFavourites = useCallback(() => api<Product[]>("/products/favourites"), []);
+  const loadFavourites = useCallback(
+    () => api<Product[]>("/products/favourites"),
+    [],
+  );
 
   return useLoadData(loadFavourites, { enabled, showErrorToast: false });
 }
 
 export function useFavouriteActions(onFavouritesChanged?: () => void) {
-  const [productPendingRemoval, setProductPendingRemoval] = useState<Product | null>(null);
+  const [productPendingRemoval, setProductPendingRemoval] =
+    useState<Product | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   async function removeFavourite(product: Product) {
     setIsRemoving(true);
     try {
-      await api<void>(`/products/${product.id}/favourite`, { method: "DELETE" });
+      await api<void>(`/products/${product.id}/favourite`, {
+        method: "DELETE",
+      });
       setProductPendingRemoval(null);
       toastStore.success("Removed from favourites");
       onFavouritesChanged?.();
@@ -68,7 +74,11 @@ export function useFavouriteActions(onFavouritesChanged?: () => void) {
     <Confirm
       open={productPendingRemoval !== null}
       title="Remove favourite"
-      body={productPendingRemoval ? `Remove ${productPendingRemoval.name} from favourites?` : ""}
+      body={
+        productPendingRemoval
+          ? `Remove ${productPendingRemoval.name} from favourites?`
+          : ""
+      }
       confirmLabel="Remove"
       destructive
       busy={isRemoving}

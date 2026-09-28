@@ -55,7 +55,11 @@ export function hasRefreshToken(): boolean {
   return Boolean(sessionStorage.getItem(REFRESH_KEY));
 }
 
-function buildErrorMessage(path: string, status: number, responseBody: unknown): string {
+function buildErrorMessage(
+  path: string,
+  status: number,
+  responseBody: unknown,
+): string {
   const detail =
     responseBody &&
     typeof responseBody === "object" &&
@@ -64,9 +68,16 @@ function buildErrorMessage(path: string, status: number, responseBody: unknown):
       ? responseBody.detail
       : "";
   const isLoginRequest = /\/login$/.test(path);
-  const containsSensitiveServerDetails = /response=|keycloak|traceback/i.test(detail);
+  const containsSensitiveServerDetails = /response=|keycloak|traceback/i.test(
+    detail,
+  );
 
-  if (isLoginRequest && (status === 401 || detail === "User not found" || detail === "Invalid username or password")) {
+  if (
+    isLoginRequest &&
+    (status === 401 ||
+      detail === "User not found" ||
+      detail === "Invalid username or password")
+  ) {
     return "Sign-in failed. Check your username and password.";
   }
 
@@ -92,7 +103,10 @@ function toApiError(path: string, error: unknown): ApiError {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
     if (!axiosError.response) {
-      return new ApiError(0, "The network request failed. Check your connection and try again.");
+      return new ApiError(
+        0,
+        "The network request failed. Check your connection and try again.",
+      );
     }
     const status = axiosError.response.status;
     const body = axiosError.response.data;
@@ -117,7 +131,9 @@ async function refreshSession(): Promise<boolean> {
   if (!refreshRequestInFlight) {
     refreshRequestInFlight = (async () => {
       try {
-        const response = await httpClient.post<Tokens>("/auth/refresh", { refresh_token: refreshToken });
+        const response = await httpClient.post<Tokens>("/auth/refresh", {
+          refresh_token: refreshToken,
+        });
         if (!response.data?.access_token) {
           clearSession();
           return false;
@@ -143,7 +159,11 @@ export type ApiRequestOptions = {
   headers?: Record<string, string>;
 };
 
-export async function api<T>(path: string, options: ApiRequestOptions = {}, allowTokenRefresh = true): Promise<T> {
+export async function api<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+  allowTokenRefresh = true,
+): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase() as Method;
   const sendAuth = options.auth !== false;
 
@@ -177,16 +197,29 @@ export async function api<T>(path: string, options: ApiRequestOptions = {}, allo
     const response = await httpClient.request<T>(axiosConfig);
     return response.data;
   } catch (error) {
-    const isAuthPath = path.startsWith("/auth/refresh") || path.endsWith("/login");
-    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const isAuthPath =
+      path.startsWith("/auth/refresh") || path.endsWith("/login");
+    const status = axios.isAxiosError(error)
+      ? error.response?.status
+      : undefined;
 
-    if (status === 401 && !isAuthPath && sendAuth && hasRefreshToken() && allowTokenRefresh) {
+    if (
+      status === 401 &&
+      !isAuthPath &&
+      sendAuth &&
+      hasRefreshToken() &&
+      allowTokenRefresh
+    ) {
       const sessionRefreshed = await refreshSession();
       if (sessionRefreshed) {
         return api<T>(path, options, false);
       }
       clearSession();
-      const expiredError = new ApiError(401, "Your session expired. Sign in again.", true);
+      const expiredError = new ApiError(
+        401,
+        "Your session expired. Sign in again.",
+        true,
+      );
       sessionExpiredCallback?.();
       throw expiredError;
     }
