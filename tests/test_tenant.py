@@ -89,3 +89,30 @@ def test_tenant_product_not_found(authenticated_tenant_client):
     )
 
     assert response.status_code == 404
+
+
+def test_low_stock_includes_only_brand_products_below_five(
+    authenticated_tenant_client, db, seed_catalog
+):
+    from server.models import Product
+
+    for quantity in (0, 1, 4, 5):
+        db.add(Product(name=f'Stock {quantity}', price=10, quantity=quantity,
+                       category_id=seed_catalog['category'].id,
+                       tenant_id=seed_catalog['tenant'].id))
+    db.add(Product(name='Other brand low stock', price=10, quantity=1,
+                   category_id=seed_catalog['category'].id,
+                   tenant_id=seed_catalog['other_tenant'].id))
+    db.commit()
+
+    response = authenticated_tenant_client.get('/Nike/products/low-stock')
+    assert response.status_code == 200
+    assert [p['quantity'] for p in response.json()] == [0, 1, 4]
+    assert all(p['tenant_name'] == 'Nike' for p in response.json())
+    product_id = response.json()[-1]['id']
+    authenticated_tenant_client.put(f'/Nike/products/{product_id}', json={'quantity': 5})
+    assert len(authenticated_tenant_client.get('/Nike/products/low-stock').json()) == 2
+
+
+def test_low_stock_cannot_access_other_brand(authenticated_tenant_client):
+    assert authenticated_tenant_client.get('/Samsung/products/low-stock').status_code == 403

@@ -34,6 +34,11 @@ export function StudioPage() {
     [brandName, skipOffset],
   );
   const studioProductsQuery = useLoadData(loadStudioProducts, { enabled: Boolean(brandName), showErrorToast: false });
+  const loadLowStockProducts = useCallback(
+    () => api<Product[]>(`/${encodeURIComponent(brandName)}/products/low-stock`),
+    [brandName],
+  );
+  const lowStockQuery = useLoadData(loadLowStockProducts, { enabled: Boolean(brandName), showErrorToast: false });
   const productsOnPage = (studioProductsQuery.data ?? []).slice(0, PRODUCTS_PER_PAGE);
   const hasNextPage = (studioProductsQuery.data?.length ?? 0) > PRODUCTS_PER_PAGE;
 
@@ -51,7 +56,7 @@ export function StudioPage() {
   );
 
   const totalUnitsOnPage = productsOnPage.reduce((sum, product) => sum + product.quantity, 0);
-  const lowStockCountOnPage = productsOnPage.filter((product) => product.quantity <= 1).length;
+  const lowStockCountOnPage = productsOnPage.filter((product) => product.quantity < 5).length;
 
   const [isRemovingProduct, setIsRemovingProduct] = useState(false);
 
@@ -61,7 +66,7 @@ export function StudioPage() {
       await api<void>(`/${encodeURIComponent(brandName)}/products/${product.id}`, { method: "DELETE" });
       setProductPendingRemoval(null);
       toastStore.success("Product removed");
-      await studioProductsQuery.reload();
+      await Promise.all([studioProductsQuery.reload(), lowStockQuery.reload()]);
     } catch (error) {
       toastFailure(error);
     } finally {
@@ -71,6 +76,7 @@ export function StudioPage() {
 
   function handleStudioCatalogChanged() {
     void studioProductsQuery.reload();
+    void lowStockQuery.reload();
   }
 
   return (
@@ -97,8 +103,32 @@ export function StudioPage() {
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         <StudioStat label="On this page" value={String(studioProductsQuery.data ? productsOnPage.length : "—")} />
         <StudioStat label="Units on this page" value={String(studioProductsQuery.data ? totalUnitsOnPage : "—")} />
-        <StudioStat label="Low or out" value={String(studioProductsQuery.data ? lowStockCountOnPage : "—")} />
+        <StudioStat label="Below 5 on this page" value={String(studioProductsQuery.data ? lowStockCountOnPage : "—")} />
       </div>
+      {lowStockQuery.isSuccess && lowStockQuery.data && lowStockQuery.data.length > 0 ? (
+        <section aria-label="Low stock warning" role="status" className="mt-6 border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <h2 className="text-sm font-semibold">Low stock — restock needed</h2>
+          <p className="mt-1 text-sm">
+            {lowStockQuery.data.length} {lowStockQuery.data.length === 1 ? "product has" : "products have"} fewer than 5 units across {brandName}.
+          </p>
+          <ul className="mt-3 max-h-64 space-y-3 overflow-y-auto">
+            {lowStockQuery.data.map((product) => (
+              <li key={product.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span><span className="font-medium">{product.name}</span> · {product.quantity <= 0 ? "Out of stock" : `Only ${product.quantity} left`}</span>
+                <button type="button" className="shrink-0 underline underline-offset-4" aria-label={`Update stock for ${product.name}`} onClick={() => setProductForStockUpdate(product)}>
+                  Update stock
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {lowStockQuery.isError ? (
+        <div className="mt-6 border border-line p-4 text-sm">
+          <p>Stock warnings could not be loaded.</p>
+          <Button variant="text" onClick={() => void lowStockQuery.refetch()}>Try again</Button>
+        </div>
+      ) : null}
       <div className="mt-6">
         <input
           value={nameFilter}

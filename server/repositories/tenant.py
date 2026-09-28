@@ -52,6 +52,18 @@ def list_products(
     return [services.serialize_product(product) for product in products]
 
 
+def list_low_stock_products(db: Session, tenant_name: str, current_user: User):
+    tenant = services.verify_tenant_user(db, current_user, tenant_name)
+    products = (
+        db.query(Product)
+        .options(selectinload(Product.category), selectinload(Product.tenant))
+        .filter(Product.tenant_id == tenant.id, Product.quantity < 5)
+        .order_by(Product.quantity, Product.id)
+        .all()
+    )
+    return [services.serialize_product(product) for product in products]
+
+
 def update_product(
     db: Session,
     tenant_name: str,
