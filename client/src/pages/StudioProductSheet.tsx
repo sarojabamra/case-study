@@ -210,14 +210,14 @@ export function ProductSheet({
             <img
               src={imagePreviewUrl}
               alt=""
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-4/3 w-full object-cover"
             />
           ) : null}
           {!imagePreviewUrl && currentProductImageUrl ? (
             <img
               src={currentProductImageUrl}
               alt=""
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-4/3 w-full object-cover"
             />
           ) : null}
           {product?.has_image ? (

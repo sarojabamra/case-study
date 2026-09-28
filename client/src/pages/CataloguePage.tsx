@@ -195,7 +195,7 @@ export function CataloguePage() {
       </section>
       <section
         id="filters"
-        className="sticky top-[var(--store-header-height,3rem)] z-30 border-y border-line bg-surface px-5 py-4 md:px-10 lg:px-16"
+        className="sticky top-(--store-header-height,3rem) z-30 border-y border-line bg-surface px-5 py-4 md:px-10 lg:px-16"
       >
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative w-96 max-w-full shrink-0">

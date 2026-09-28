@@ -67,7 +67,7 @@ export function ProductPage() {
   if (productQuery.isPending) {
     return (
       <div className="grid gap-8 px-5 py-10 md:px-10 lg:grid-cols-12 lg:px-16">
-        <Skeleton className="aspect-[4/5] lg:col-span-7" />
+        <Skeleton className="aspect-4/5 lg:col-span-7" />
         <Skeleton className="h-80 lg:col-span-5" />
       </div>
     );
