@@ -112,8 +112,8 @@ This project uses Keycloak for authentication. You need to run a Keycloak instan
       - **Direct Access Grants**: ON
       - **Service Account Roles**: ON
       - Save the client. Note down the **Client secret** from the "Credentials" tab and update your `.env` file in the project root.
-      - Then go to the service account roles tab and give the client `manage-users`, `query-users` and `view-users` roles.
-      - Additonally, ensure that we have removed `email`, `fName` and `lName` from `Realm Settings`-> `User Profile`.
+      - Then go to the service account roles tab and assign the client `manage-users`, `query-users` and `view-users` roles.
+      - Additonally, ensure that we have removed `email`, `fName` and `lName` as required fields from `Realm Settings`-> `User Profile`.
 
 ### 4. Database Setup and Seeding
 
