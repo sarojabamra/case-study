@@ -1,11 +1,6 @@
-import logging
 import os
 from pathlib import Path
 from typing import Protocol
-
-from fastapi import HTTPException, status
-
-logger = logging.getLogger(__name__)
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
@@ -15,7 +10,7 @@ class StorageError(Exception):
 
 
 class ObjectNotFound(Exception):
-    """The object key is not in the bucket."""
+    """The image does not exist in storage."""
 
 
 class ObjectStore(Protocol):
@@ -64,66 +59,6 @@ class MemoryObjectStore:
     def delete(self, key: str) -> None:
         _check_key(key)
         self.objects.pop(key, None)
-
-
-class S3ObjectStore:
-    def __init__(self) -> None:
-        endpoint = os.getenv("S3_ENDPOINT")
-        access_key = os.getenv("S3_ACCESS_KEY")
-        secret_key = os.getenv("S3_SECRET_KEY")
-        bucket = os.getenv("S3_BUCKET")
-        if not endpoint or not access_key or not secret_key or not bucket:
-            raise StorageError("object storage is not configured")
-
-        style = os.getenv("S3_ADDRESSING_STYLE", "path")
-        if style not in {"path", "virtual", "auto"}:
-            style = "path"
-
-        import boto3
-        from botocore.config import Config
-
-        self._bucket = bucket
-        self._client = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=os.getenv("S3_REGION", "us-east-1"),
-            config=Config(
-                signature_version="s3v4",
-                s3={"addressing_style": style},
-                retries={"max_attempts": 3, "mode": "standard"},
-                connect_timeout=2,
-                read_timeout=10,
-            ),
-        )
-
-    def put(self, key: str, body: bytes, content_type: str) -> None:
-        _check_content_type(content_type)
-        self._call("put_object", key, "put failed", Body=body, ContentType=content_type)
-
-    def get(self, key: str) -> tuple[bytes, str]:
-        response = self._call("get_object", key, "get failed")
-        payload = response["Body"].read()
-        content_type = response.get("ContentType") or "application/octet-stream"
-        return payload, content_type
-
-    def delete(self, key: str) -> None:
-        self._call("delete_object", key, "delete failed")
-
-    def _call(self, method: str, key: str, failed: str, **kwargs):
-        _check_key(key)
-        from botocore.exceptions import BotoCoreError, ClientError
-
-        try:
-            return getattr(self._client, method)(Bucket=self._bucket, Key=key, **kwargs)
-        except ClientError as exc:
-            code = exc.response.get("Error", {}).get("Code", "")
-            if method == "get_object" and code in {"NoSuchKey", "404", "NotFound", "NoSuchBucket"}:
-                raise ObjectNotFound(key) from exc
-            raise StorageError(failed) from exc
-        except BotoCoreError as exc:
-            raise StorageError(failed) from exc
 
 
 _EXT_CONTENT_TYPE = {
@@ -179,27 +114,6 @@ def default_local_store_root() -> Path:
     return Path(__file__).resolve().parents[1] / "product-images-data"
 
 
-def _s3_configured() -> bool:
-    return all(
-        os.getenv(key)
-        for key in ("S3_ENDPOINT", "S3_ACCESS_KEY", "S3_SECRET_KEY", "S3_BUCKET")
-    )
-
-
-def _open_object_store() -> ObjectStore:
-    if _s3_configured():
-        try:
-            s3 = S3ObjectStore()
-            s3._client.head_bucket(Bucket=s3._bucket)
-            return s3
-        except Exception:
-            logger.warning(
-                "S3 is configured but not reachable; using local object store at %s",
-                default_local_store_root(),
-            )
-    return LocalObjectStore(default_local_store_root())
-
-
 _store: ObjectStore | None = None
 
 
@@ -207,5 +121,5 @@ def get_object_store() -> ObjectStore:
     global _store
     if _store is not None:
         return _store
-    _store = _open_object_store()
+    _store = LocalObjectStore(default_local_store_root())
     return _store

@@ -6,5 +6,4 @@ python-multipart
 httpx
 python-dotenv
 pytest
-boto3
 pillow

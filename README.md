@@ -231,3 +231,9 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
 - **Repeatable seeding**: Running `python seed.py` adds missing seed records without deleting existing data or overwriting existing product prices and stock. Existing brands and products from earlier seed catalogues remain; the script does not replace them. Repeated runs do not duplicate seed products within the same brand.
 - **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
 - **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin username in `seed.py`, ensure the corresponding user exists in Keycloak.
+
+### Product image storage
+
+Product images are saved on the backend filesystem in `product-images-data/` by default.
+Set `LOCAL_OBJECT_STORE_PATH` to use a different directory. The backend serves images
+through `/products/{product_id}/image`; the database stores their file keys and content types.
