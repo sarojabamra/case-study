@@ -1,19 +1,22 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import StoreShell from "@/components/layout/StoreShell";
+import AccountPage from "@/features/account/AccountPage";
+import AdminPage from "@/features/admin/AdminPage";
+import BrandLoginPage from "@/features/auth/BrandLoginPage";
+import LoginPage from "@/features/auth/LoginPage";
+import SignupPage from "@/features/auth/SignupPage";
+import CartPage from "@/features/cart/CartPage";
+import BrandsPage from "@/features/catalogue/BrandsPage";
+import CataloguePage from "@/features/catalogue/CataloguePage";
+import ProductPage from "@/features/catalogue/ProductPage";
+import NotFoundPage from "@/features/errors/NotFoundPage";
+import FavouritesPage from "@/features/orders/FavouritesPage";
+import OrderDetailPage from "@/features/orders/OrderDetailPage";
+import OrdersPage from "@/features/orders/OrdersPage";
+import StudioOrdersPage from "@/features/studio/StudioOrdersPage";
+import StudioPage from "@/features/studio/StudioPage";
 import { RequireAdmin, RequireTenant } from "@/utils/routeGuards";
-import { StoreShell } from "@/components/StoreShell";
-import { AccountPage } from "@/pages/AccountPage";
-import { AdminPage } from "@/pages/AdminPage";
-import { BrandLoginPage, LoginPage, SignupPage } from "@/pages/AuthPages";
-import { BrandsPage } from "@/pages/BrandsPage";
-import { CartPage } from "@/pages/CartPage";
-import { CataloguePage } from "@/pages/CataloguePage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { FavouritesPage, OrdersPage } from "@/pages/OrdersPage";
-import { OrderDetailPage } from "@/pages/OrderDetailPage";
-import { ProductPage } from "@/pages/ProductPage";
-import { StudioOrdersPage } from "@/pages/StudioOrdersPage";
-import { StudioPage } from "@/pages/StudioPage";
 
 export function AppRoutes() {
   return (

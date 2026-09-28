@@ -2,13 +2,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
-import { AppErrorBoundary } from "@/components/ErrorBoundary";
-import { ToastViewport } from "@/components/ToastViewport";
+import AppErrorBoundary from "@/components/ui/AppErrorBoundary";
+import ToastViewport from "@/components/ui/ToastViewport";
+import "@/index.css";
 import { AppRoutes } from "@/routes";
 import { AuthProvider } from "@/utils/authSession";
 import { CartProvider } from "@/utils/cart";
 import { CurrencyProvider } from "@/utils/currency";
-import "@/index.css";
 
 const root = document.getElementById("root");
 

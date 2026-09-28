@@ -1,7 +1,7 @@
-import { Navigate, useLocation, useParams } from "react-router-dom";
+import { Navigate,useLocation,useParams } from "react-router-dom";
 
+import SystemState from "@/components/ui/SystemState";
 import { useAuth } from "@/utils/authSession";
-import { SystemState } from "@/components/SystemState";
 import { safeNext } from "@/utils/schemas";
 
 function brandNamesMatchIgnoringCase(

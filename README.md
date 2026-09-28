@@ -43,7 +43,6 @@ Before you begin, ensure you have the following installed:
 
 - **Python 3.8+**
 - **Node.js LTS** (and npm or yarn)
-- **Docker** (for running Keycloak)
 - **SQLite3** (usually pre-installed with Python, no separate installation needed unless you encounter issues)
 
 ### 1. Backend Setup
