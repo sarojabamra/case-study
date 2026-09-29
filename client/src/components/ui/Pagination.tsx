@@ -51,7 +51,7 @@ export default function Pagination({ page, limit, total, totalPages, hasNext, on
               aria-current={number === page ? "page" : undefined}
               className={
                 number === page
-                  ? "cursor-pointer border border-accent bg-accent px-3 py-2 text-sm text-white"
+                  ? "cursor-pointer border border-ink bg-ink px-3 py-2 text-sm text-canvas"
                   : "interactive-surface border border-line-strong px-3 py-2 text-sm"
               }
               onClick={() => onPage(number)}

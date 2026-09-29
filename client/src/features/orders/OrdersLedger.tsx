@@ -15,7 +15,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 function mobileTabButtonClass(isActive: boolean) {
   return isActive
-    ? "cursor-pointer border border-accent bg-accent px-3 py-2 text-sm text-white transition-colors"
+    ? "cursor-pointer border border-ink bg-ink px-3 py-2 text-sm text-canvas transition-colors"
     : "interactive-surface border border-line-strong px-3 py-2 text-sm";
 }
 
