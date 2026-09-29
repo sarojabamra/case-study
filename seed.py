@@ -77,8 +77,6 @@ def get_or_create_product(
     return product
 
 
-# Illustrative demo prices in USD, not current retail prices.
-# Quantity 0 exercises out-of-stock UI; quantity 1 exercises low-stock UI.
 catalogue = [
     ("Apple", "Electronics", "iPhone 15", 699, 8),
     ("Apple", "Electronics", "MacBook Air 13-inch", 999, 3),
@@ -109,7 +107,6 @@ catalogue = [
     ("IKEA", "Home & Kitchen", "RANARP Work Lamp", 55, 7),
 ]
 
-# Derive these from the catalogue so every seeded brand and category has products.
 categories = {
     name: get_or_create_category(name)
     for name in dict.fromkeys(row[1] for row in catalogue)
