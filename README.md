@@ -12,13 +12,13 @@ This project is a full-stack e-commerce platform built as a case study. It featu
 - **Low-stock warning**: Studio staff see all products below 5 units, including out-of-stock products, with direct stock-update actions.
 - **Admin console**: Admins create brands, staff users, and categories. Brand deletion is blocked while staff or products are linked.
 - **Safe product deletion**: Products referenced by a saved cart, order history, or customer review cannot be deleted; staff can set stock to 0 instead.
-- **Local images**: Product images are validated and stored on the backend filesystem. S3 is not used.
+- **Local images**: Product images are validated and stored on the backend filesystem.
 
 ## Technologies Used
 
 - **Frontend**: React (with TypeScript), Vite, TailwindCSS, React Router DOM, Zod (for validation).
 - **Backend**: Python (FastAPI), SQLAlchemy (ORM), SQLite (Database).
-- **Authentication**: Keycloak (OpenID Connect provider).
+- **Authentication**: Keycloak.
 - **Testing**: Jest (Frontend), Pytest (Backend).
 
 ## ARCHITECTURE
@@ -128,7 +128,7 @@ The project uses an SQLite database named `ecommerce.db`. The `seed.py` script c
 
     This command creates any missing tables, roles, categories, brands, and demo products. It does **not** delete `ecommerce.db`, overwrite existing product values, or remove old records.
 
-    It also creates or promotes the local `admin` user to the `ADMIN` role. Create the matching Keycloak identity separately before logging in as that user.
+    It does not create user accounts. If a local user named `admin` already exists, it updates that user’s role to `ADMIN`.
 
 ### 5. User Creation
 
@@ -140,7 +140,7 @@ After Keycloak and database setup, you need to create users.
 
 #### Admin User
 
-`seed.py` creates or promotes the local `admin` account to the `ADMIN` role. Create the matching `admin` identity and password in Keycloak, then sign in through the normal `/login` screen. The local account and Keycloak identity must use the same username.
+Seeding creates the `ADMIN` role but does not create an administrator account. Create a user named `admin`. On the next `seed.py` run, that existing local user is promoted to `ADMIN`. Then sign in through `/login`.
 
 #### Tenant User (Brand Staff)
 
@@ -214,7 +214,7 @@ Units sold and revenue are calculated from the brand’s product lines and exclu
 
 - **Repeatable seeding**: Running `python seed.py` adds only missing seed records. It does not delete existing data, overwrite existing stock/prices, or remove older brands and products.
 - **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
-- **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin username in `seed.py`, ensure the corresponding user exists in Keycloak.
+- **Admin creation**: `seed.py` creates no users. Create the administrator identity and matching local `admin` user yourself; a later seed run promotes that existing local user to `ADMIN`.
 
 ### Product image storage
 

@@ -13,31 +13,14 @@ ensure_product_image_columns(engine)
 
 db = SessionLocal()
 
-ADMIN_USERNAME = "admin"
-
-roles = ["ADMIN", "TENANT", "USER"]
-
-for role_name in roles:
-    existing_role = db.query(Role).filter(Role.name == role_name).first()
-
-    if not existing_role:
+for role_name in ("ADMIN", "TENANT", "USER"):
+    if db.query(Role).filter(Role.name == role_name).first() is None:
         db.add(Role(name=role_name))
-
 db.flush()
 
 admin_role = db.query(Role).filter(Role.name == "ADMIN").first()
-admin_user = db.query(User).filter(User.username == ADMIN_USERNAME).one_or_none()
-
-if admin_user is None and admin_role is not None:
-    db.add(
-        User(
-            username=ADMIN_USERNAME,
-            role_id=admin_role.id,
-            tenant_id=None,
-            keycloak_id=None,
-        )
-    )
-elif admin_user is not None and admin_role is not None:
+admin_user = db.query(User).filter(User.username == "admin").one_or_none()
+if admin_user is not None and admin_role is not None:
     admin_user.role_id = admin_role.id
 
 
@@ -144,8 +127,7 @@ print(
     "Seed complete:",
     f"{db.query(Tenant).count()} brands,",
     f"{db.query(Category).count()} categories,",
-    f"{db.query(Product).count()} products,",
-    f"admin user '{ADMIN_USERNAME}'",
+    f"{db.query(Product).count()} products",
 )
 
 db.close()
