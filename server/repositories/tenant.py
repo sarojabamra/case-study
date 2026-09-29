@@ -1,10 +1,11 @@
 import logging
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from server.images import build_object_key, prepare_image, read_upload
-from server.models import OrderItem, Product, SavedCartItem, User
+from server.models import Order, OrderItem, Product, Review, SavedCartItem, User
 from server.repositories import services
 from server.schemas import ProductCreate, ProductUpdate
 from server.storage import ObjectStore, StorageError
@@ -50,6 +51,44 @@ def list_products(
         .all()
     )
     return [services.serialize_product(product) for product in products]
+
+
+def get_studio_summary(db: Session, tenant_name: str, current_user: User):
+    tenant = services.verify_tenant_user(db, current_user, tenant_name)
+    product_count = db.query(func.count(Product.id)).filter(Product.tenant_id == tenant.id).scalar() or 0
+    low_stock_count = (
+        db.query(func.count(Product.id))
+        .filter(Product.tenant_id == tenant.id, Product.quantity < 5)
+        .scalar()
+        or 0
+    )
+    order_count = (
+        db.query(func.count(func.distinct(OrderItem.order_id)))
+        .join(Order)
+        .join(Product)
+        .filter(Product.tenant_id == tenant.id)
+        .scalar()
+        or 0
+    )
+    revenue = (
+        db.query(func.coalesce(func.sum(OrderItem.price * OrderItem.quantity), 0))
+        .join(Order)
+        .join(Product)
+        .filter(
+            Product.tenant_id == tenant.id,
+            Order.status != "cancelled",
+            func.coalesce(Order.return_status, "") != "approved",
+        )
+        .scalar()
+        or 0
+    )
+    return {
+        "brand_count": 1,
+        "product_count": product_count,
+        "low_stock_count": low_stock_count,
+        "order_count": order_count,
+        "revenue": float(revenue),
+    }
 
 
 def list_low_stock_products(db: Session, tenant_name: str, current_user: User):
@@ -107,6 +146,8 @@ def delete_product(
         dependencies.append("customers' saved carts")
     if db.query(OrderItem.id).filter(OrderItem.product_id == product_id).first():
         dependencies.append("order history")
+    if db.query(Review.id).filter(Review.product_id == product_id).first():
+        dependencies.append("customer reviews")
     if dependencies:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

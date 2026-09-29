@@ -28,6 +28,8 @@ export type Product = {
   category_name: string | null;
   has_image: boolean;
   image_version: string | null;
+  average_rating: number | null;
+  rating_count: number;
 };
 
 export type ProductPage = {
@@ -155,4 +157,26 @@ export type SignupResult = {
   message: string;
   user_id: number;
   username: string;
+};
+
+export type StudioSummary = {
+  brand_count: number;
+  product_count: number;
+  low_stock_count: number;
+  order_count: number;
+  revenue: number;
+};
+
+export type Review = {
+  id: number;
+  rating: number;
+  comment: string | null;
+  reviewer_name: string;
+  created_at: string;
+};
+
+export type ReviewSummary = {
+  average_rating: number | null;
+  rating_count: number;
+  reviews: Review[];
 };

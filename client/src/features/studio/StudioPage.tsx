@@ -28,11 +28,9 @@ export default function StudioPage() {
     setProductPendingRemoval,
     studioProductsQuery,
     lowStockQuery,
-    productsOnPage,
+    summaryQuery,
     hasNextPage,
     filteredProductsOnPage,
-    totalUnitsOnPage,
-    lowStockCountOnPage,
     isRemovingProduct,
     handleRemoveProduct,
     handleStudioCatalogChanged,
@@ -68,20 +66,15 @@ export default function StudioPage() {
           </Button>
         </div>
       </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <StudioStat
-          label="On this page"
-          value={String(studioProductsQuery.data ? productsOnPage.length : "—")}
-        />
-        <StudioStat
-          label="Units on this page"
-          value={String(studioProductsQuery.data ? totalUnitsOnPage : "—")}
-        />
-        <StudioStat
-          label="Below 5 on this page"
-          value={String(studioProductsQuery.data ? lowStockCountOnPage : "—")}
-        />
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <StudioStat label="Brand" value={summaryQuery.data ? String(summaryQuery.data.brand_count) : "—"} />
+        <StudioStat label="Products" value={summaryQuery.data ? String(summaryQuery.data.product_count) : "—"} />
+        <StudioStat label="Low stock" value={summaryQuery.data ? String(summaryQuery.data.low_stock_count) : "—"} />
+        <StudioStat label="Orders" value={summaryQuery.data ? String(summaryQuery.data.order_count) : "—"} />
+        <StudioStat label="Revenue" value={summaryQuery.data ? formatPrice(summaryQuery.data.revenue) : "—"} />
       </div>
+      {summaryQuery.isError ? <p className="mt-3 text-sm text-danger">Studio totals could not be loaded.</p> : null}
+      <p className="mt-3 text-xs text-muted">Revenue excludes cancelled orders and approved returns.</p>
       <LowStockWarning
         brandName={brandName}
         setProductForStockUpdate={setProductForStockUpdate}

@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, Table, UniqueConstraint
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -58,6 +60,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
 
 
 class Product(Base):
@@ -80,6 +83,7 @@ class Product(Base):
         secondary=favourite_products,
         back_populates="favourite_products",
     )
+    reviews = relationship("Review", back_populates="product")
 
 
 class UserAddress(Base):
@@ -160,3 +164,20 @@ class Category(Base):
     name = Column(String, unique=True, nullable=False, index=True)
 
     products = relationship("Product", back_populates="category")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", name="uq_reviews_user_product"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
+    rating = Column(Integer, nullable=False)
+    comment = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    user = relationship("User", back_populates="reviews")
+    product = relationship("Product", back_populates="reviews")

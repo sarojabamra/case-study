@@ -36,6 +36,15 @@ def list_products(
     return tenant.list_products(db, tenant_name, current_user, skip, limit)
 
 
+@router.get("/studio/summary")
+def get_studio_summary(
+    tenant_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return tenant.get_studio_summary(db, tenant_name, current_user)
+
+
 @router.get("/products/low-stock")
 def list_low_stock_products(
     tenant_name: str,

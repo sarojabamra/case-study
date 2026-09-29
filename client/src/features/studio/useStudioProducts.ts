@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { api } from "@/services/api";
-import type { Category, Product } from "@/services/types";
+import type { Category, Product, StudioSummary } from "@/services/types";
 import { useLoadData } from "@/utils/useLoadData";
 
 type ProductInput = Pick<
@@ -25,18 +25,25 @@ export function useStudioProducts(
     () => api<Product[]>(`${productsPath}/low-stock`),
     [productsPath],
   );
+  const loadSummary = useCallback(
+    () => api<StudioSummary>(`/${encodeURIComponent(brand)}/studio/summary`),
+    [brand],
+  );
   const options = { enabled: Boolean(brand), showErrorToast: false };
   const productsQuery = useLoadData(loadProducts, options);
   const lowStockQuery = useLoadData(loadLowStock, options);
+  const summaryQuery = useLoadData(loadSummary, options);
   const { reload: reloadProducts } = productsQuery;
   const { reload: reloadLowStock } = lowStockQuery;
+  const { reload: reloadSummary } = summaryQuery;
   const reload = useCallback(async () => {
-    await Promise.all([reloadProducts(), reloadLowStock()]);
-  }, [reloadProducts, reloadLowStock]);
+    await Promise.all([reloadProducts(), reloadLowStock(), reloadSummary()]);
+  }, [reloadProducts, reloadLowStock, reloadSummary]);
 
   return {
     productsQuery,
     lowStockQuery,
+    summaryQuery,
     productsOnPage: (productsQuery.data ?? []).slice(0, pageSize),
     hasNextPage: (productsQuery.data?.length ?? 0) > pageSize,
     reload,

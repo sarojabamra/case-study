@@ -11,14 +11,15 @@ beforeEach(() => {
   mockApi.mockResolvedValue([]);
 });
 
-test("loads the requested inventory page and refreshes both stock queries", async () => {
+test("loads the requested inventory page and refreshes all studio dashboard queries", async () => {
   const { result } = renderHook(() => useStudioProducts("Brand & Co", 2, 10));
   await waitFor(() => expect(result.current.productsQuery.isPending).toBe(false));
   expect(mockApi).toHaveBeenCalledWith("/Brand%20%26%20Co/products?skip=10&limit=11");
   expect(mockApi).toHaveBeenCalledWith("/Brand%20%26%20Co/products/low-stock");
+  expect(mockApi).toHaveBeenCalledWith("/Brand%20%26%20Co/studio/summary");
   mockApi.mockClear();
   await act(async () => { await result.current.reload(); });
-  expect(mockApi).toHaveBeenCalledTimes(2);
+  expect(mockApi).toHaveBeenCalledTimes(3);
 });
 
 test("does not fetch without a brand", () => {

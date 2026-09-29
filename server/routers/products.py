@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import User
+from ..schemas import ReviewCreate
 from ..security import get_current_user
 from ..storage import ObjectStore, get_object_store
-from server.repositories import categories, products
+from server.repositories import categories, products, reviews
 
 router = APIRouter(
     prefix="/products",
@@ -55,6 +56,21 @@ def unfavourite_product(
 @router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):
     return categories.list_categories(db)
+
+
+@router.get("/{product_id}/reviews")
+def list_reviews(product_id: int, db: Session = Depends(get_db)):
+    return reviews.list_reviews(db, product_id)
+
+
+@router.post("/{product_id}/reviews", status_code=status.HTTP_201_CREATED)
+def create_review(
+    product_id: int,
+    payload: ReviewCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return reviews.create_review(db, current_user, product_id, payload)
 
 
 @router.get("/{product_id}/image")

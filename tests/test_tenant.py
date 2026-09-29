@@ -116,3 +116,43 @@ def test_low_stock_includes_only_brand_products_below_five(
 
 def test_low_stock_cannot_access_other_brand(authenticated_tenant_client):
     assert authenticated_tenant_client.get('/Samsung/products/low-stock').status_code == 403
+
+
+def test_studio_summary_is_scoped_and_excludes_cancelled_or_returned_revenue(
+    authenticated_tenant_client, db, seed_catalog, normal_user
+):
+    from server.models import Order, OrderItem, Product
+
+    low_stock_product = Product(
+        name="Low stock product",
+        price=20,
+        quantity=4,
+        category_id=seed_catalog["category"].id,
+        tenant_id=seed_catalog["tenant"].id,
+    )
+    db.add(low_stock_product)
+    db.commit()
+
+    delivered = Order(user_id=normal_user.id, total_quantity=2, total_amount=50, status="delivered")
+    cancelled = Order(user_id=normal_user.id, total_quantity=1, total_amount=50, status="cancelled")
+    returned = Order(user_id=normal_user.id, total_quantity=1, total_amount=30, status="delivered", return_status="approved")
+    db.add_all([delivered, cancelled, returned])
+    db.flush()
+    db.add_all([
+        OrderItem(order_id=delivered.id, product_id=low_stock_product.id, quantity=2, price=25),
+        OrderItem(order_id=cancelled.id, product_id=low_stock_product.id, quantity=1, price=50),
+        OrderItem(order_id=returned.id, product_id=low_stock_product.id, quantity=1, price=30),
+    ])
+    db.commit()
+
+    response = authenticated_tenant_client.get("/Nike/studio/summary")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "brand_count": 1,
+        "product_count": 3,
+        "low_stock_count": 1,
+        "order_count": 3,
+        "revenue": 50.0,
+    }
+    assert authenticated_tenant_client.get("/Samsung/studio/summary").status_code == 403

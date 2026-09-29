@@ -34,6 +34,7 @@ export function useStudioPage() {
   const {
     productsQuery: studioProductsQuery,
     lowStockQuery,
+    summaryQuery,
     productsOnPage,
     hasNextPage,
     reload,
@@ -59,15 +60,6 @@ export function useStudioPage() {
     (product) =>
       !nameFilterLower || product.name.toLowerCase().includes(nameFilterLower),
   );
-
-  const totalUnitsOnPage = productsOnPage.reduce(
-    (sum, product) => sum + product.quantity,
-    0,
-  );
-
-  const lowStockCountOnPage = productsOnPage.filter(
-    (product) => product.quantity < 5,
-  ).length;
 
   const [isRemovingProduct, setIsRemovingProduct] = useState(false);
 
@@ -103,11 +95,10 @@ export function useStudioPage() {
     setProductPendingRemoval,
     studioProductsQuery,
     lowStockQuery,
+    summaryQuery,
     productsOnPage,
     hasNextPage,
     filteredProductsOnPage,
-    totalUnitsOnPage,
-    lowStockCountOnPage,
     isRemovingProduct,
     handleRemoveProduct,
     handleStudioCatalogChanged,

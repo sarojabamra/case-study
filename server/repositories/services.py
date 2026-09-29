@@ -103,7 +103,9 @@ def verify_tenant_user(db: Session, user: User, tenant_name: str):
     return tenant
 
 
-def serialize_product(product: Product) -> dict:
+def serialize_product(
+    product: Product, average_rating: float | None = None, rating_count: int = 0
+) -> dict:
     image_key = product.image_key
     return {
         "id": product.id,
@@ -116,6 +118,8 @@ def serialize_product(product: Product) -> dict:
         "category_name": product.category.name if product.category is not None else None,
         "has_image": bool(image_key),
         "image_version": _image_version(image_key),
+        "average_rating": average_rating,
+        "rating_count": rating_count,
     }
 
 

@@ -5,6 +5,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import Stepper from "@/components/ui/Stepper";
 import SystemState from "@/components/ui/SystemState";
 import CartView from "@/features/cart/CartView";
+import ReviewSection from "@/features/catalogue/ReviewSection";
 import { api, ApiError } from "@/services/api";
 import type { Product } from "@/services/types";
 import { useCart } from "@/utils/cart";
@@ -192,6 +193,7 @@ export default function ProductPage() {
           <CartView compact />
         </aside>
       </div>
+      <ReviewSection productId={product.id} />
       {product.quantity > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas px-4 py-3 lg:hidden">
           <FormMessage message={addToCartError} />

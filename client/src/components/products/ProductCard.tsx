@@ -67,6 +67,12 @@ export default function ProductCard({ product, saved, onToggleFavourite }: Produ
             {product.name}
           </Link>
         </div>
+        <p className="text-sm text-muted" aria-label={product.rating_count ? `${product.average_rating?.toFixed(1)} out of 5 from ${product.rating_count} reviews` : "No reviews yet"}>
+          <span className="mr-2 tracking-[0.08em] text-ink" aria-hidden="true">
+            {"★".repeat(Math.round(product.average_rating ?? 0))}{"☆".repeat(5 - Math.round(product.average_rating ?? 0))}
+          </span>
+          {product.rating_count} {product.rating_count === 1 ? "review" : "reviews"}
+        </p>
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-sm tabular-nums">{formatPrice(product.price)}</p>
           <p className="text-sm text-muted">{stock.text}</p>

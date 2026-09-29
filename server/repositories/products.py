@@ -1,9 +1,10 @@
 import logging
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
-from server.models import Product, Tenant, User
+from server.models import Product, Review, Tenant, User
 from server.repositories import services
 from server.storage import ALLOWED_CONTENT_TYPES, ObjectNotFound, ObjectStore, StorageError
 
@@ -60,8 +61,21 @@ def list_products(
     offset = (page - 1) * limit
     products_list = query.order_by(*order).offset(offset).limit(limit).all()
 
+    ratings_by_product = {
+        product_id: (round(float(average_rating), 1), rating_count)
+        for product_id, average_rating, rating_count in (
+            db.query(Review.product_id, func.avg(Review.rating), func.count(Review.id))
+            .filter(Review.product_id.in_([product.id for product in products_list]))
+            .group_by(Review.product_id)
+            .all()
+        )
+    } if products_list else {}
+
     return {
-        "products": [services.serialize_product(product) for product in products_list],
+        "products": [
+            services.serialize_product(product, *ratings_by_product.get(product.id, (None, 0)))
+            for product in products_list
+        ],
         "page": page,
         "limit": limit,
         "total": total,

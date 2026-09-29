@@ -222,3 +222,25 @@ class CartLineInput(BaseModel):
 
 class CartSync(BaseModel):
     items: List[CartLineInput]
+
+
+class ReviewCreate(BaseModel):
+    rating: int
+    comment: Optional[str] = None
+
+    @field_validator("rating")
+    @classmethod
+    def validate_rating(cls, value: int) -> int:
+        if value < 1 or value > 5:
+            raise ValueError("Rating must be between 1 and 5")
+        return value
+
+    @field_validator("comment")
+    @classmethod
+    def validate_comment(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        comment = value.strip()
+        if len(comment) > 1000:
+            raise ValueError("Review must be 1000 characters or fewer")
+        return comment or None
