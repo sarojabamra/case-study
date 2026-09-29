@@ -149,7 +149,7 @@ def test_studio_summary_is_scoped_and_excludes_cancelled_or_returned_revenue(
 
     assert response.status_code == 200
     assert response.json() == {
-        "brand_count": 1,
+        "units_sold": 2,
         "product_count": 3,
         "low_stock_count": 1,
         "order_count": 3,

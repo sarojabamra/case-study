@@ -70,20 +70,29 @@ def get_studio_summary(db: Session, tenant_name: str, current_user: User):
         .scalar()
         or 0
     )
+    sales_filters = (
+        Product.tenant_id == tenant.id,
+        Order.status != "cancelled",
+        func.coalesce(Order.return_status, "") != "approved",
+    )
+    units_sold = (
+        db.query(func.coalesce(func.sum(OrderItem.quantity), 0))
+        .join(Order)
+        .join(Product)
+        .filter(*sales_filters)
+        .scalar()
+        or 0
+    )
     revenue = (
         db.query(func.coalesce(func.sum(OrderItem.price * OrderItem.quantity), 0))
         .join(Order)
         .join(Product)
-        .filter(
-            Product.tenant_id == tenant.id,
-            Order.status != "cancelled",
-            func.coalesce(Order.return_status, "") != "approved",
-        )
+        .filter(*sales_filters)
         .scalar()
         or 0
     )
     return {
-        "brand_count": 1,
+        "units_sold": int(units_sold),
         "product_count": product_count,
         "low_stock_count": low_stock_count,
         "order_count": order_count,

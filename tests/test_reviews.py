@@ -29,6 +29,10 @@ def test_delivered_customer_can_create_and_read_one_review(authenticated_client,
     product_card = next(item for item in catalogue.json()["products"] if item["id"] == product.id)
     assert product_card["average_rating"] == 5.0
     assert product_card["rating_count"] == 1
+    authenticated_client.post(f"/products/{product.id}/favourite")
+    favourite = authenticated_client.get("/products/favourites").json()[0]
+    assert favourite["average_rating"] == 5.0
+    assert favourite["rating_count"] == 1
     assert authenticated_client.post(
         f"/products/{product.id}/reviews", json={"rating": 4}
     ).status_code == 409

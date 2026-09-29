@@ -160,7 +160,7 @@ export type SignupResult = {
 };
 
 export type StudioSummary = {
-  brand_count: number;
+  units_sold: number;
   product_count: number;
   low_stock_count: number;
   order_count: number;

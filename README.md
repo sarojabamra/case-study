@@ -4,14 +4,15 @@ This project is a full-stack e-commerce platform built as a case study. It featu
 
 ## Features
 
-- **Product Catalog**: Browse products by categories and brands.
-- **Shopping Cart**: Add, update, and remove items from the cart. The cart items are stored locally for users that have not logged in.
-- **User Authentication**: Secure login/signup for shoppers and brand staff using Keycloak.
-- **Protected Routes**: Different access levels for regular users, brand staff (tenants), and administrators.
-- **User Account Management**: View orders, update profile details like update passwords, add/remove/edit addresses.
-- **Brand Studio**: A dedicated portal for brand staff to manage their products and orders (requires brand-specific login).
-- **Admin Panel**: For platform administrators to manage users, products, and other platform settings.
-- **Error Handling**: Error display and session management.
+- **Catalogue**: Search, filter, sort, and paginate products; the public grid shows 8 products per page in 4 desktop columns.
+- **Ratings and reviews**: Product and favourite cards show average stars and review counts. A signed-in customer can leave one 1–5-star review with an optional comment after that product has been delivered.
+- **Cart and checkout**: Guests keep a browser cart; signed-in users get a saved cart, addresses, checkout, order history, cancellation, and return requests.
+- **Authentication and roles**: Keycloak handles login. `USER`, `TENANT`, and `ADMIN` routes are protected in both the browser and API.
+- **Brand studio**: Brand staff manage only their brand’s products, stock, images, and orders through a brand-specific login. The studio shows totals for units sold, products, low-stock items, orders, and revenue.
+- **Low-stock warning**: Studio staff see all products below 5 units, including out-of-stock products, with direct stock-update actions.
+- **Admin console**: Admins create brands, staff users, and categories. Brand deletion is blocked while staff or products are linked.
+- **Safe product deletion**: Products referenced by a saved cart, order history, or customer review cannot be deleted; staff can set stock to 0 instead.
+- **Local images**: Product images are validated and stored on the backend filesystem. S3 is not used.
 
 ## Technologies Used
 
@@ -125,17 +126,9 @@ The project uses an SQLite database named `ecommerce.db`. The `seed.py` script c
     python seed.py
     ```
 
-    This command will:
-    - Delete any existing `ecommerce.db`.
-    - Create a new `ecommerce.db` with the necessary tables.
-    - Populate the database with sample products, categories, and brands.
-    - **Important**: After seeding, you will need to manually create a user either in Keycloak or through the /signup route named `admin`. Then run this command:
+    This command creates any missing tables, roles, categories, brands, and demo products. It does **not** delete `ecommerce.db`, overwrite existing product values, or remove old records.
 
-    ```bash
-    python seed.py
-    ```
-
-    again. `seed.py` will automatically update the role of that user to `ADMIN`.
+    It also creates or promotes the local `admin` user to the `ADMIN` role. Create the matching Keycloak identity separately before logging in as that user.
 
 ### 5. User Creation
 
@@ -147,27 +140,7 @@ After Keycloak and database setup, you need to create users.
 
 #### Admin User
 
-Either:
-
-1.  **Create an admin user through Keycloak**:
-    - In Keycloak Admin Console (`http://localhost:8080`), go to the `ecommerce` realm, then "Users".
-    - Click "Create new user". Provide a specific username (`admin`) and password.
-
-    (or)
-
-2.  **Create an admin user through the frontend interface**
-
-    Use the /signup route to create a user with the username `admin`
-
-    After 1 (or) 2:
-
-    **Run `seed.py` (again)**:
-
-    ```bash
-    python seed.py
-    ```
-
-    The `seed.py` script has logic to identify a specific user with the username `admin` and update their role in the application's database to `ADMIN`.
+`seed.py` creates or promotes the local `admin` account to the `ADMIN` role. Create the matching `admin` identity and password in Keycloak, then sign in through the normal `/login` screen. The local account and Keycloak identity must use the same username.
 
 #### Tenant User (Brand Staff)
 
@@ -182,8 +155,7 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
    - Now the tenant user can user the login credentials provided to sign in.
    - The user can now go to their account settings to change their password accordingly.
 
-3. **Tenant Name Matching**: For the studio access to work, the `user.tenant_name` (which often defaults to the username or is derived from it) must match the tenant name in the URL (e.g., `/adidas/studio`).
-   - **Important**: To access the studio, a brand staff member **must log in via their brand's specific login page**. For example, for the "Adidas" brand, they would go to `http://localhost:5173/adidas/login`. Attempting to access the studio via a general shopper login (`http://localhost:5173/login`) will result in a "Brand Studio Access Restricted" message, even if they have the correct tenant role.
+3. **Brand-specific login**: To access a studio, staff must use their brand login URL, for example `http://localhost:5173/Adidas/login`. The backend checks both the `TENANT` role and that the staff account belongs to the brand in the URL.
 
 ### 6. Running the Application
 
@@ -203,6 +175,19 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
     ```
     The frontend will typically run on `http://localhost:5173`. Open this URL in your browser.
 
+## Key API endpoints
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /products/` | Public catalogue, including each product’s `average_rating` and `rating_count`. |
+| `GET` / `POST /products/{id}/reviews` | Read public reviews or submit one review after delivery. |
+| `GET /products/favourites` | Signed-in user’s favourites, including rating summaries. |
+| `GET /{tenant}/studio/summary` | Tenant-only totals for units sold, products, low stock, orders, and revenue. |
+| `GET /{tenant}/products/low-stock` | Tenant-only products with quantity below 5. |
+| `PUT` / `DELETE /{tenant}/products/{id}` | Update or safely delete a brand product. |
+
+Units sold and revenue are calculated from the brand’s product lines and exclude cancelled orders and approved returns.
+
 ## Running Tests
 
 ### Backend Tests (Pytest)
@@ -210,7 +195,7 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
 1.  **Activate your Python virtual environment** (if not already active).
 2.  **Run tests from the project root**:
     ```bash
-    pytest
+    ecommerce-venv/bin/python -m pytest -q
     ```
 
 ### Frontend Tests (Jest)
@@ -221,18 +206,18 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
     ```
 2.  **Run tests**:
     ```bash
-    npm test
-    # or yarn test
+    npm test -- --runInBand
+    npm run build
     ```
 
 ## Important Notes
 
-- **Repeatable seeding**: Running `python seed.py` adds missing seed records without deleting existing data or overwriting existing product prices and stock. Existing brands and products from earlier seed catalogues remain; the script does not replace them. Repeated runs do not duplicate seed products within the same brand.
+- **Repeatable seeding**: Running `python seed.py` adds only missing seed records. It does not delete existing data, overwrite existing stock/prices, or remove older brands and products.
 - **Tenant Login**: The distinction between general login and brand-specific login for tenants is crucial for accessing studio pages. Ensure brand staff use their specific `/:tenant/login` URL.
 - **Admin Sync**: The `seed.py` script attempts to synchronize an admin user's role. If you change the default admin username in `seed.py`, ensure the corresponding user exists in Keycloak.
 
 ### Product image storage
 
-Product images are saved on the backend filesystem in `product-images-data/` by default.
-Set `LOCAL_OBJECT_STORE_PATH` to use a different directory. The backend serves images
-through `/products/{product_id}/image`; the database stores their file keys and content types.
+Product images are saved on the backend filesystem in `product-images-data/` by default. Set `LOCAL_OBJECT_STORE_PATH` to use a different directory. The backend serves images through `/products/{product_id}/image`; the database stores their file keys and content types. No S3 configuration or dependency is required.
+
+For a fuller explanation of the architecture, every feature flow, and every application file, read [CODEBASE_GUIDE.md](CODEBASE_GUIDE.md).

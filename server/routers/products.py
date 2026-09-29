@@ -31,8 +31,11 @@ def list_products(
 
 
 @router.get("/favourites")
-def list_favourite_products(current_user: User = Depends(get_current_user)):
-    return products.list_favourite_products(current_user)
+def list_favourite_products(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return products.list_favourite_products(db, current_user)
 
 
 @router.post("/{product_id}/favourite", status_code=status.HTTP_201_CREATED)

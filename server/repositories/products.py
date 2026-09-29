@@ -61,15 +61,7 @@ def list_products(
     offset = (page - 1) * limit
     products_list = query.order_by(*order).offset(offset).limit(limit).all()
 
-    ratings_by_product = {
-        product_id: (round(float(average_rating), 1), rating_count)
-        for product_id, average_rating, rating_count in (
-            db.query(Review.product_id, func.avg(Review.rating), func.count(Review.id))
-            .filter(Review.product_id.in_([product.id for product in products_list]))
-            .group_by(Review.product_id)
-            .all()
-        )
-    } if products_list else {}
+    ratings_by_product = _review_summaries(db, [product.id for product in products_list])
 
     return {
         "products": [
@@ -83,8 +75,29 @@ def list_products(
     }
 
 
-def list_favourite_products(current_user: User):
-    return [services.serialize_product(product) for product in current_user.favourite_products]
+def list_favourite_products(db: Session, current_user: User):
+    favourite_products = current_user.favourite_products
+    ratings_by_product = _review_summaries(
+        db, [product.id for product in favourite_products]
+    )
+    return [
+        services.serialize_product(product, *ratings_by_product.get(product.id, (None, 0)))
+        for product in favourite_products
+    ]
+
+
+def _review_summaries(db: Session, product_ids: list[int]) -> dict[int, tuple[float, int]]:
+    if not product_ids:
+        return {}
+    return {
+        product_id: (round(float(average_rating), 1), rating_count)
+        for product_id, average_rating, rating_count in (
+            db.query(Review.product_id, func.avg(Review.rating), func.count(Review.id))
+            .filter(Review.product_id.in_(product_ids))
+            .group_by(Review.product_id)
+            .all()
+        )
+    }
 
 
 def favourite_product(db: Session, current_user: User, product_id: int):
