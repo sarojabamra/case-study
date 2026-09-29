@@ -12,6 +12,7 @@ from server.database import (
     engine,
     ensure_order_shipping_columns,
     ensure_order_status_columns,
+    ensure_order_item_return_status_column,
     ensure_product_image_columns,
     ensure_user_full_name_column,
 )
@@ -46,4 +47,5 @@ models.Base.metadata.create_all(engine)
 ensure_product_image_columns(engine)
 ensure_order_shipping_columns(engine)
 ensure_order_status_columns(engine)
+ensure_order_item_return_status_column(engine)
 ensure_user_full_name_column(engine)

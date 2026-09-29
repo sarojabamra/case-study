@@ -37,6 +37,7 @@ def create_review(db: Session, current_user: User, product_id: int, payload: Rev
             OrderItem.product_id == product_id,
             Order.user_id == current_user.id,
             Order.status == "delivered",
+            OrderItem.is_cancelled.is_(False),
         )
         .first()
     )

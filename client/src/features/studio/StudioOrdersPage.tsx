@@ -22,7 +22,7 @@ export default function StudioOrdersPage() {
   const { user } = useAuth();
   const brandName = user?.tenant_name ?? "";
   const [page, setPage] = useState(1);
-  const [busyOrderId, setBusyOrderId] = useState<number | null>(null);
+  const [busyActionId, setBusyActionId] = useState<number | null>(null);
 
   const loadOrders = useCallback(
     () =>
@@ -36,7 +36,7 @@ export default function StudioOrdersPage() {
   useDocumentTitle(`${brandName} orders · E-commerce`);
 
   async function updateOrderStatus(orderId: number, status: string) {
-    setBusyOrderId(orderId);
+    setBusyActionId(orderId);
     try {
       await api<Order>(
         `/${encodeURIComponent(brandName)}/orders/${orderId}/status`,
@@ -52,18 +52,35 @@ export default function StudioOrdersPage() {
     } catch (error) {
       toastFailure(error);
     } finally {
-      setBusyOrderId(null);
+      setBusyActionId(null);
+    }
+  }
+
+  async function cancelItem(orderId: number, itemId: number) {
+    setBusyActionId(itemId);
+    try {
+      await api<Order>(
+        `/${encodeURIComponent(brandName)}/orders/${orderId}/items/${itemId}/cancel`,
+        { method: "POST" },
+      );
+      toastStore.success("Item cancelled");
+      await ordersQuery.reload();
+    } catch (error) {
+      toastFailure(error);
+    } finally {
+      setBusyActionId(null);
     }
   }
 
   async function decideReturn(
     orderId: number,
+    itemId: number,
     returnStatus: "approved" | "rejected",
   ) {
-    setBusyOrderId(orderId);
+    setBusyActionId(itemId);
     try {
       await api<Order>(
-        `/${encodeURIComponent(brandName)}/orders/${orderId}/return`,
+        `/${encodeURIComponent(brandName)}/orders/${orderId}/items/${itemId}/return`,
         {
           method: "PATCH",
           body: JSON.stringify({ return_status: returnStatus }),
@@ -76,7 +93,7 @@ export default function StudioOrdersPage() {
     } catch (error) {
       toastFailure(error);
     } finally {
-      setBusyOrderId(null);
+      setBusyActionId(null);
     }
   }
 
@@ -126,7 +143,7 @@ export default function StudioOrdersPage() {
       <ul className="mt-8 space-y-4">
         {(ordersQuery.data?.orders ?? []).map((order) => {
           const nextStatuses = tenantStatusOptions(order.status);
-          const isBusy = busyOrderId === order.id;
+          const isBusy = busyActionId === order.id;
           return (
             <li key={order.id} className="border border-line bg-surface p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -137,15 +154,23 @@ export default function StudioOrdersPage() {
               </div>
               <p className="mt-2 text-sm text-muted">
                 {formatOrderStatus(order.status)}
-                {order.return_status
-                  ? ` · ${formatReturnStatus(order.return_status)}`
-                  : ""}
               </p>
-              <ul className="mt-4 space-y-1 text-sm">
+              <ul className="mt-4 divide-y divide-line border-y border-line text-sm">
                 {order.items.map((line) => (
-                  <li key={line.id}>
-                    {line.product_name ?? `Product ${line.product_id}`} ·{" "}
-                    {line.quantity} · {formatPrice(line.price)}
+                  <li key={line.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <p>
+                      {line.product_name ?? `Product ${line.product_id}`} · {line.quantity} · {formatPrice(line.price)}
+                      {line.is_cancelled ? " · Cancelled" : line.return_status ? ` · ${formatReturnStatus(line.return_status)}` : ""}
+                    </p>
+                    {(order.status === "placed" || order.status === "shipped") && !line.is_cancelled ? (
+                      <Button variant="secondary" busy={busyActionId === line.id} onClick={() => void cancelItem(order.id, line.id)}>Cancel item</Button>
+                    ) : null}
+                    {order.status === "delivered" && line.return_status === "requested" ? (
+                      <div className="flex gap-2">
+                        <Button busy={busyActionId === line.id} onClick={() => void decideReturn(order.id, line.id, "approved")}>Approve return</Button>
+                        <Button variant="secondary" busy={busyActionId === line.id} onClick={() => void decideReturn(order.id, line.id, "rejected")}>Decline return</Button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -154,31 +179,13 @@ export default function StudioOrdersPage() {
                   {nextStatuses.map((status) => (
                     <Button
                       key={status}
-                      variant={status === "cancelled" ? "secondary" : "primary"}
+                      variant="primary"
                       busy={isBusy}
                       onClick={() => void updateOrderStatus(order.id, status)}
                     >
                       Mark {formatOrderStatus(status)}
                     </Button>
                   ))}
-                </div>
-              ) : null}
-              {order.status === "delivered" &&
-                order.return_status === "requested" ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    busy={isBusy}
-                    onClick={() => void decideReturn(order.id, "approved")}
-                  >
-                    Approve return
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    busy={isBusy}
-                    onClick={() => void decideReturn(order.id, "rejected")}
-                  >
-                    Decline return
-                  </Button>
                 </div>
               ) : null}
             </li>

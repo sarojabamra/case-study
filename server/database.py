@@ -94,3 +94,21 @@ def ensure_user_full_name_column(bind=engine) -> None:
         names = {row[1] for row in rows}
         if "full_name" not in names:
             conn.exec_driver_sql("ALTER TABLE users ADD COLUMN full_name VARCHAR")
+
+
+def ensure_order_item_return_status_column(bind=engine) -> None:
+    if bind.dialect.name != "sqlite":
+        return
+    with bind.begin() as conn:
+        rows = conn.exec_driver_sql("PRAGMA table_info(order_items)").fetchall()
+        if not rows:
+            return
+        names = {row[1] for row in rows}
+        if "return_status" not in names:
+            conn.exec_driver_sql("ALTER TABLE order_items ADD COLUMN return_status VARCHAR")
+        if "is_cancelled" not in names:
+            conn.exec_driver_sql("ALTER TABLE order_items ADD COLUMN is_cancelled BOOLEAN NOT NULL DEFAULT 0")
+        conn.exec_driver_sql(
+            "UPDATE order_items SET return_status = (SELECT return_status FROM orders WHERE orders.id = order_items.order_id) "
+            "WHERE return_status IS NULL AND order_id IN (SELECT id FROM orders WHERE return_status IS NOT NULL)"
+        )

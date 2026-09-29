@@ -136,17 +136,23 @@ def get_order(db: Session, current_user: User, order_id: int):
     return services.serialize_order(order)
 
 
-def cancel_order(db: Session, current_user: User, order_id: int):
+def cancel_order_item(db: Session, current_user: User, order_id: int, item_id: int):
     order = services.get_order_for_user(db, current_user.id, order_id)
-    order_status.cancel_order_for_customer(db, order)
+    item = next((item for item in order.items if item.id == item_id), None)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+    order_status.cancel_order_item(db, order, item)
     db.commit()
     db.refresh(order)
     return services.serialize_order(order)
 
 
-def request_order_return(db: Session, current_user: User, order_id: int):
+def request_order_item_return(db: Session, current_user: User, order_id: int, item_id: int):
     order = services.get_order_for_user(db, current_user.id, order_id)
-    order_status.request_return_for_customer(db, order)
+    item = next((item for item in order.items if item.id == item_id), None)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+    order_status.request_return_for_customer(db, order, item)
     db.commit()
     db.refresh(order)
     return services.serialize_order(order)

@@ -41,19 +41,21 @@ def get_order(
     return orders.get_order(db, current_user, order_id)
 
 
-@router.post("/{order_id}/cancel")
-def cancel_order(
+@router.post("/{order_id}/items/{item_id}/cancel")
+def cancel_order_item(
     order_id: int,
+    item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return orders.cancel_order(db, current_user, order_id)
+    return orders.cancel_order_item(db, current_user, order_id, item_id)
 
 
-@router.post("/{order_id}/return")
-def request_order_return(
+@router.post("/{order_id}/items/{item_id}/return")
+def request_order_item_return(
     order_id: int,
+    item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return orders.request_order_return(db, current_user, order_id)
+    return orders.request_order_item_return(db, current_user, order_id, item_id)

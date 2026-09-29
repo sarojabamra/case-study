@@ -25,9 +25,9 @@ export function formatReturnStatus(status: string) {
 export function tenantStatusOptions(currentStatus: string) {
   switch (currentStatus) {
     case "placed":
-      return ["shipped", "cancelled"] as const;
+      return ["shipped"] as const;
     case "shipped":
-      return ["delivered", "cancelled"] as const;
+      return ["delivered"] as const;
     default:
       return [] as const;
   }

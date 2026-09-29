@@ -5,11 +5,12 @@ from server.env import load_app_env
 load_app_env()
 
 from server import models
-from server.database import SessionLocal, engine, ensure_product_image_columns
+from server.database import SessionLocal, engine, ensure_order_item_return_status_column, ensure_product_image_columns
 from server.models import Category, Product, Role, Tenant, User
 
 models.Base.metadata.create_all(engine)
 ensure_product_image_columns(engine)
+ensure_order_item_return_status_column(engine)
 
 db = SessionLocal()
 

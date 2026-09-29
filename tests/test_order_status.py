@@ -79,7 +79,9 @@ def test_customer_can_request_return_after_delivery(
         )
         assert patch.status_code == 200
 
-    response = authenticated_client.post(f"/orders/{order_id}/return")
+    order = authenticated_client.get(f"/orders/{order_id}").json()
+    item_id = order["items"][0]["id"]
+    response = authenticated_client.post(f"/orders/{order_id}/items/{item_id}/return")
 
     assert response.status_code == 200
-    assert response.json()["return_status"] == "requested"
+    assert response.json()["items"][0]["return_status"] == "requested"

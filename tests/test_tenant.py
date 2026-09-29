@@ -135,13 +135,13 @@ def test_studio_summary_is_scoped_and_excludes_cancelled_or_returned_revenue(
 
     delivered = Order(user_id=normal_user.id, total_quantity=2, total_amount=50, status="delivered")
     cancelled = Order(user_id=normal_user.id, total_quantity=1, total_amount=50, status="cancelled")
-    returned = Order(user_id=normal_user.id, total_quantity=1, total_amount=30, status="delivered", return_status="approved")
+    returned = Order(user_id=normal_user.id, total_quantity=1, total_amount=30, status="delivered")
     db.add_all([delivered, cancelled, returned])
     db.flush()
     db.add_all([
         OrderItem(order_id=delivered.id, product_id=low_stock_product.id, quantity=2, price=25),
         OrderItem(order_id=cancelled.id, product_id=low_stock_product.id, quantity=1, price=50),
-        OrderItem(order_id=returned.id, product_id=low_stock_product.id, quantity=1, price=30),
+        OrderItem(order_id=returned.id, product_id=low_stock_product.id, quantity=1, price=30, return_status="approved"),
     ])
     db.commit()
 

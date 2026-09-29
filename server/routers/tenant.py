@@ -116,16 +116,30 @@ def update_order_status(
     )
 
 
-@router.patch("/orders/{order_id}/return")
-def update_order_return(
+@router.post("/orders/{order_id}/items/{item_id}/cancel")
+def cancel_order_item(
     tenant_name: str,
     order_id: int,
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return tenant_orders.cancel_tenant_order_item(
+        db, tenant_name, current_user, order_id, item_id
+    )
+
+
+@router.patch("/orders/{order_id}/items/{item_id}/return")
+def update_order_item_return(
+    tenant_name: str,
+    order_id: int,
+    item_id: int,
     payload: OrderReturnDecision,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return tenant_orders.update_tenant_order_return(
-        db, tenant_name, current_user, order_id, payload
+    return tenant_orders.update_tenant_order_item_return(
+        db, tenant_name, current_user, order_id, item_id, payload
     )
 
 

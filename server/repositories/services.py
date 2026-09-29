@@ -161,16 +161,23 @@ def serialize_order(order: Order, tenant_id: int | None = None) -> dict:
                 else None,
                 "quantity": item.quantity,
                 "price": item.price,
+                "return_status": item.return_status,
+                "is_cancelled": item.is_cancelled,
             }
         )
+
+    total_quantity = order.total_quantity
+    total_amount = order.total_amount
+    if tenant_id is not None:
+        total_quantity = sum(item["quantity"] for item in items)
+        total_amount = sum(item["quantity"] * item["price"] for item in items)
 
     return {
         "id": order.id,
         "user_id": order.user_id,
-        "total_quantity": order.total_quantity,
-        "total_amount": order.total_amount,
+        "total_quantity": total_quantity,
+        "total_amount": total_amount,
         "status": order.status or "placed",
-        "return_status": order.return_status,
         "shipping_address": shipping,
         "items": items,
     }

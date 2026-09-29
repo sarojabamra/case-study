@@ -31,8 +31,8 @@ export default function OrderDetail() {
     enabled: orderIdIsValid,
     showErrorToast: false,
   });
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [confirmReturn, setConfirmReturn] = useState(false);
+  const [cancelItemId, setCancelItemId] = useState<number | null>(null);
+  const [returnItemId, setReturnItemId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useDocumentTitle(`Order ${orderId} · E-commerce`);
@@ -69,14 +69,15 @@ export default function OrderDetail() {
 
   const order = orderQuery.data;
   const canCancel = order.status === "placed" || order.status === "shipped";
-  const canRequestReturn = order.status === "delivered" && !order.return_status;
+  const canRequestReturn = order.status === "delivered";
 
-  async function cancelOrder() {
+  async function cancelItem() {
+    if (cancelItemId === null) return;
     setIsSubmitting(true);
     try {
-      await api<Order>(`/orders/${order.id}/cancel`, { method: "POST" });
-      toastStore.success("Order cancelled");
-      setConfirmCancel(false);
+      await api<Order>(`/orders/${order.id}/items/${cancelItemId}/cancel`, { method: "POST" });
+      toastStore.success("Item cancelled");
+      setCancelItemId(null);
       await orderQuery.reload();
     } catch (error) {
       toastFailure(error);
@@ -86,11 +87,12 @@ export default function OrderDetail() {
   }
 
   async function requestReturn() {
+    if (returnItemId === null) return;
     setIsSubmitting(true);
     try {
-      await api<Order>(`/orders/${order.id}/return`, { method: "POST" });
+      await api<Order>(`/orders/${order.id}/items/${returnItemId}/return`, { method: "POST" });
       toastStore.success("Return requested");
-      setConfirmReturn(false);
+      setReturnItemId(null);
       await orderQuery.reload();
     } catch (error) {
       toastFailure(error);
@@ -117,9 +119,6 @@ export default function OrderDetail() {
       <h1 className="mt-2 font-display text-4xl font-light">Order detail</h1>
       <p className="mt-3 text-sm text-muted">
         {formatOrderStatus(order.status)}
-        {order.return_status
-          ? ` · ${formatReturnStatus(order.return_status)}`
-          : ""}
         {" · "}
         {order.total_quantity} items ·{" "}
         <span className="tabular-nums">{formatPrice(order.total_amount)}</span>
@@ -152,28 +151,21 @@ export default function OrderDetail() {
               </Link>
               <p className="mt-1 text-sm text-muted">
                 Quantity {orderLine.quantity}
+                {orderLine.is_cancelled ? " · Cancelled" : orderLine.return_status ? ` · ${formatReturnStatus(orderLine.return_status)}` : ""}
               </p>
             </div>
-            <p className="text-sm tabular-nums">
-              {formatPrice(orderLine.price)}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-sm tabular-nums">{formatPrice(orderLine.price)}</p>
+              {canCancel && !orderLine.is_cancelled ? (
+                <Button variant="secondary" onClick={() => setCancelItemId(orderLine.id)}>Cancel item</Button>
+              ) : null}
+              {canRequestReturn && !orderLine.is_cancelled && !orderLine.return_status ? (
+                <Button variant="secondary" onClick={() => setReturnItemId(orderLine.id)}>Request return</Button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
-      {canCancel || canRequestReturn ? (
-        <div className="mt-8 flex flex-wrap gap-3">
-          {canCancel ? (
-            <Button variant="secondary" onClick={() => setConfirmCancel(true)}>
-              Cancel order
-            </Button>
-          ) : null}
-          {canRequestReturn ? (
-            <Button variant="secondary" onClick={() => setConfirmReturn(true)}>
-              Request return
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
       <div className="mt-8 flex flex-wrap gap-4 text-sm">
         <Link to="/orders" className="underline underline-offset-4">
           View order history
@@ -188,23 +180,23 @@ export default function OrderDetail() {
         </div>
       ) : null}
       <Confirm
-        open={confirmCancel}
-        title="Cancel order"
-        body="Your items will be returned to stock and this order will be marked cancelled."
-        confirmLabel="Cancel order"
+        open={cancelItemId !== null}
+        title="Cancel item"
+        body="This item will be returned to stock. Other items in the order will stay unchanged."
+        confirmLabel="Cancel item"
         destructive
         busy={isSubmitting}
-        onConfirm={() => void cancelOrder()}
-        onClose={() => setConfirmCancel(false)}
+        onConfirm={() => void cancelItem()}
+        onClose={() => setCancelItemId(null)}
       />
       <Confirm
-        open={confirmReturn}
+        open={returnItemId !== null}
         title="Request return"
         body="The brand will review your return request after delivery."
         confirmLabel="Request return"
         busy={isSubmitting}
         onConfirm={() => void requestReturn()}
-        onClose={() => setConfirmReturn(false)}
+        onClose={() => setReturnItemId(null)}
       />
     </div>
   );

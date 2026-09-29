@@ -139,6 +139,8 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     # Price at purchase, so a later catalogue change does not rewrite the order.
     price = Column(Float, nullable=False)
+    return_status = Column(String, nullable=True)
+    is_cancelled = Column(Boolean, nullable=False, default=False)
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product", back_populates="order_items")

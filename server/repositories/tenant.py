@@ -73,7 +73,8 @@ def get_studio_summary(db: Session, tenant_name: str, current_user: User):
     sales_filters = (
         Product.tenant_id == tenant.id,
         Order.status != "cancelled",
-        func.coalesce(Order.return_status, "") != "approved",
+        OrderItem.is_cancelled.is_(False),
+        func.coalesce(OrderItem.return_status, "") != "approved",
     )
     units_sold = (
         db.query(func.coalesce(func.sum(OrderItem.quantity), 0))

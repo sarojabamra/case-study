@@ -97,15 +97,38 @@ def update_tenant_order_status(
     return services.serialize_order(order)
 
 
-def update_tenant_order_return(
+def update_tenant_order_item_return(
     db: Session,
     tenant_name: str,
     current_user: User,
     order_id: int,
+    item_id: int,
     payload: OrderReturnDecision,
 ):
-    _, order = _get_tenant_order(db, tenant_name, current_user, order_id)
-    order_status.update_return_status_for_tenant(db, order, payload.return_status)
+    tenant, order = _get_tenant_order(db, tenant_name, current_user, order_id)
+    item = next(
+        (item for item in order.items if item.id == item_id and item.product and item.product.tenant_id == tenant.id),
+        None,
+    )
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+    order_status.update_return_status_for_tenant(db, order, item, payload.return_status)
     db.commit()
     db.refresh(order)
-    return services.serialize_order(order)
+    return services.serialize_order(order, tenant_id=tenant.id)
+
+
+def cancel_tenant_order_item(
+    db: Session, tenant_name: str, current_user: User, order_id: int, item_id: int
+):
+    tenant, order = _get_tenant_order(db, tenant_name, current_user, order_id)
+    item = next(
+        (item for item in order.items if item.id == item_id and item.product and item.product.tenant_id == tenant.id),
+        None,
+    )
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+    order_status.cancel_order_item(db, order, item)
+    db.commit()
+    db.refresh(order)
+    return services.serialize_order(order, tenant_id=tenant.id)

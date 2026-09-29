@@ -98,9 +98,6 @@ export default function OrdersLedger() {
                   </div>
                   <p className="mt-2 text-sm text-muted">
                     {formatOrderStatus(order.status)}
-                    {order.return_status
-                      ? ` · ${formatReturnStatus(order.return_status)}`
-                      : ""}
                     {" · "}
                     {order.total_quantity} items
                   </p>
@@ -111,6 +108,7 @@ export default function OrdersLedger() {
                           `Product ${orderLineItem.product_id}`}{" "}
                         · {orderLineItem.quantity} ·{" "}
                         {formatPrice(orderLineItem.price)}
+                        {orderLineItem.is_cancelled ? " · Cancelled" : orderLineItem.return_status ? ` · ${formatReturnStatus(orderLineItem.return_status)}` : ""}
                       </li>
                     ))}
                   </ul>

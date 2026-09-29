@@ -6,9 +6,9 @@ This project is a full-stack e-commerce platform built as a case study. It featu
 
 - **Catalogue**: Search, filter, sort, and paginate products; the public grid shows 8 products per page in 4 desktop columns.
 - **Ratings and reviews**: Product and favourite cards show average stars and review counts. A signed-in customer can leave one 1–5-star review with an optional comment after that product has been delivered.
-- **Cart and checkout**: Guests keep a browser cart; signed-in users get a saved cart, addresses, checkout, order history, cancellation, and return requests.
+- **Cart and checkout**: Guests keep a browser cart; signed-in users get a saved cart, addresses, checkout, order history, item-level cancellations, and item-level return requests.
 - **Authentication and roles**: Keycloak handles login. `USER`, `TENANT`, and `ADMIN` routes are protected in both the browser and API.
-- **Brand studio**: Brand staff manage only their brand’s products, stock, images, and orders through a brand-specific login. The studio shows totals for units sold, products, low-stock items, orders, and revenue.
+- **Brand studio**: Brand staff manage only their brand’s products, stock, images, and orders through a brand-specific login. Order lists and totals include only that brand’s product lines; the studio shows units sold, products, low-stock items, orders, and revenue.
 - **Low-stock warning**: Studio staff see all products below 5 units, including out-of-stock products, with direct stock-update actions.
 - **Admin console**: Admins create brands, staff users, and categories. Brand deletion is blocked while staff or products are linked.
 - **Safe product deletion**: Products referenced by a saved cart, order history, or customer review cannot be deleted; staff can set stock to 0 instead.
@@ -184,9 +184,13 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
 | `GET /products/favourites` | Signed-in user’s favourites, including rating summaries. |
 | `GET /{tenant}/studio/summary` | Tenant-only totals for units sold, products, low stock, orders, and revenue. |
 | `GET /{tenant}/products/low-stock` | Tenant-only products with quantity below 5. |
+| `POST /orders/{id}/items/{item_id}/cancel` | Cancel one eligible order item. |
+| `POST /orders/{id}/items/{item_id}/return` | Request a return for one delivered order item. |
+| `POST /{tenant}/orders/{id}/items/{item_id}/cancel` | Tenant cancellation for one of its own items. |
+| `PATCH /{tenant}/orders/{id}/items/{item_id}/return` | Tenant decision for one of its own return items. |
 | `PUT` / `DELETE /{tenant}/products/{id}` | Update or safely delete a brand product. |
 
-Units sold and revenue are calculated from the brand’s product lines and exclude cancelled orders and approved returns.
+Units sold and revenue are calculated from the brand’s product lines and exclude cancelled lines and approved returned lines.
 
 ## Running Tests
 

@@ -91,6 +91,8 @@ export type OrderItem = {
   tenant_name?: string | null;
   quantity: number;
   price: number;
+  return_status: ReturnStatus | null;
+  is_cancelled: boolean;
 };
 
 export type Order = {
@@ -99,7 +101,6 @@ export type Order = {
   total_quantity: number;
   total_amount: number;
   status: OrderStatus;
-  return_status: ReturnStatus | null;
   shipping_address: ShippingAddress | null;
   items: OrderItem[];
 };
