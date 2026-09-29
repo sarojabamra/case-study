@@ -155,7 +155,7 @@ Tenant users (brand staff) can access their brand's studio. This requires a spec
    - Now the tenant user can user the login credentials provided to sign in.
    - The user can now go to their account settings to change their password accordingly.
 
-3. **Brand-specific login**: To access a studio, staff must use their brand login URL, for example `http://localhost:5173/Adidas/login`. The backend checks both the `TENANT` role and that the staff account belongs to the brand in the URL.
+3. **Brand-specific login**: To access a studio, staff must use their brand login URL, for example `http://localhost:5173/Adidas/login`. The backend checks both the `TENANT` role and that the staff account belongs to the brand in the URL. Brand studio access remains available after a normal page refresh while the session is valid.
 
 ### 6. Running the Application
 

@@ -12,12 +12,32 @@ import type { Me, Tokens } from "@/services/types";
 import { toastStore } from "@/utils/toast";
 
 const STUDIO_NOTE = "shop.studioNote";
+const BRAND_STUDIO_TENANT = "shop.brandStudioTenant";
 
 type LoginInput = {
   username: string;
   password: string;
   tenantName?: string;
 };
+
+function tenantNamesMatch(left: string, right: string) {
+  return left.localeCompare(right, undefined, { sensitivity: "accent" }) === 0;
+}
+
+function restoreBrandStudioAccess(user: Me): Me {
+  try {
+    const tenantName = sessionStorage.getItem(BRAND_STUDIO_TENANT);
+    user.isBrandStaffLoggedIn = Boolean(
+      user.role === "TENANT" &&
+        user.tenant_name &&
+        tenantName &&
+        tenantNamesMatch(user.tenant_name, tenantName),
+    );
+  } catch {
+    user.isBrandStaffLoggedIn = false;
+  }
+  return user;
+}
 
 type AuthContextValue = {
   user: Me | null;
@@ -48,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus("anonymous");
       setStudioNote(false);
       sessionStorage.removeItem(STUDIO_NOTE);
+      sessionStorage.removeItem(BRAND_STUDIO_TENANT);
       if (!sessionReadyRef.current) {
         return;
       }
@@ -86,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) {
           return;
         }
-        setUser(currentUser);
+        setUser(restoreBrandStudioAccess(currentUser));
         let showStudioNote = false;
         try {
           showStudioNote = sessionStorage.getItem(STUDIO_NOTE) === "1";
@@ -132,7 +153,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(tokens);
     const currentUser = await api<Me>("/auth/me");
 
-    currentUser.isBrandStaffLoggedIn = !!input.tenantName;
+    const hasBrandStudioAccess = Boolean(
+      input.tenantName &&
+        currentUser.role === "TENANT" &&
+        currentUser.tenant_name &&
+        tenantNamesMatch(currentUser.tenant_name, input.tenantName),
+    );
+    currentUser.isBrandStaffLoggedIn = hasBrandStudioAccess;
+    try {
+      if (hasBrandStudioAccess) {
+        sessionStorage.setItem(BRAND_STUDIO_TENANT, currentUser.tenant_name!);
+      } else {
+        sessionStorage.removeItem(BRAND_STUDIO_TENANT);
+      }
+    } catch {}
 
     setUser(currentUser);
     setStatus("ready");
@@ -152,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function logout() {
     clearSession();
     sessionStorage.removeItem(STUDIO_NOTE);
+    sessionStorage.removeItem(BRAND_STUDIO_TENANT);
     setUser(null);
     setStudioNote(false);
     setStatus("anonymous");
@@ -163,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
     try {
-      const currentUser = await api<Me>("/auth/me");
+      const currentUser = restoreBrandStudioAccess(await api<Me>("/auth/me"));
       setUser(currentUser);
       return currentUser;
     } catch {
