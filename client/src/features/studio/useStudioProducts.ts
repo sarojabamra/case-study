@@ -4,11 +4,16 @@ import { api } from "@/services/api";
 import type { Category, Product, StudioSummary } from "@/services/types";
 import { useLoadData } from "@/utils/useLoadData";
 
-type ProductInput = Pick<
-  Product,
-  "name" | "price" | "quantity" | "category_id"
->;
-type SavedProduct = { product: { id: number; }; };
+type ProductInput = {
+  name: string;
+  price: number;
+  quantity: number;
+  category_id: number;
+};
+
+type SavedProduct = {
+  product: { id: number };
+};
 
 export function useStudioProducts(
   brand: string,

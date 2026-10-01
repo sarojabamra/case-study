@@ -20,8 +20,8 @@ type LoginInput = {
   tenantName?: string;
 };
 
-function tenantNamesMatch(left: string, right: string) {
-  return left.localeCompare(right, undefined, { sensitivity: "accent" }) === 0;
+function sameBrandName(left: string, right: string) {
+  return left.toLowerCase() === right.toLowerCase();
 }
 
 function restoreBrandStudioAccess(user: Me): Me {
@@ -31,7 +31,7 @@ function restoreBrandStudioAccess(user: Me): Me {
       user.role === "TENANT" &&
         user.tenant_name &&
         tenantName &&
-        tenantNamesMatch(user.tenant_name, tenantName),
+        sameBrandName(user.tenant_name, tenantName),
     );
   } catch {
     user.isBrandStaffLoggedIn = false;
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       input.tenantName &&
         currentUser.role === "TENANT" &&
         currentUser.tenant_name &&
-        tenantNamesMatch(currentUser.tenant_name, input.tenantName),
+        sameBrandName(currentUser.tenant_name, input.tenantName),
     );
     currentUser.isBrandStaffLoggedIn = hasBrandStudioAccess;
     try {

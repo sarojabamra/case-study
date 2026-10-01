@@ -8,11 +8,7 @@ import { useDocumentTitle } from "@/utils/title";
 import { toastFailure } from "@/utils/toast";
 import { useLoadData } from "@/utils/useLoadData";
 import { useCallback, useEffect } from "react";
-import {
-  Link,
-  useNavigate,
-  useParams
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 export default function BrandLoginPage() {
   const params = useParams();
@@ -23,10 +19,7 @@ export default function BrandLoginPage() {
   const brandsQuery = useLoadData(loadBrands);
 
   const matchingBrand = (brandsQuery.data ?? []).find(
-    (brand) =>
-      brand.name.localeCompare(tenantNameFromUrl, undefined, {
-        sensitivity: "accent",
-      }) === 0,
+    (brand) => brand.name.toLowerCase() === tenantNameFromUrl.toLowerCase(),
   );
 
   useDocumentTitle(

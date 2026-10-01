@@ -1,11 +1,21 @@
-import type { useStudioPage } from "./useStudioPage";
+import type { Product } from "@/services/types";
 
-type Props = Pick<ReturnType<typeof useStudioPage>, "brandName" | "setProductForStockUpdate" | "lowStockQuery">;
+type Props = {
+  brandName: string;
+  products: Product[];
+  onUpdateStock: (product: Product) => void;
+};
 
-export default function LowStockWarning({ brandName, setProductForStockUpdate, lowStockQuery }: Props) {
-  return (lowStockQuery.isSuccess &&
-    lowStockQuery.data &&
-    lowStockQuery.data.length > 0 ? (
+export default function LowStockWarning({
+  brandName,
+  products,
+  onUpdateStock,
+}: Props) {
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
     <section
       aria-label="Low stock warning"
       role="status"
@@ -13,12 +23,11 @@ export default function LowStockWarning({ brandName, setProductForStockUpdate, l
     >
       <h2 className="text-sm font-semibold">Low stock — restock needed</h2>
       <p className="mt-1 text-sm">
-        {lowStockQuery.data.length}{" "}
-        {lowStockQuery.data.length === 1 ? "product has" : "products have"}{" "}
+        {products.length} {products.length === 1 ? "product has" : "products have"}{" "}
         fewer than 5 units across {brandName}.
       </p>
       <ul className="mt-3 max-h-64 space-y-3 overflow-y-auto">
-        {lowStockQuery.data.map((product) => (
+        {products.map((product) => (
           <li
             key={product.id}
             className="flex flex-wrap items-center justify-between gap-2 text-sm"
@@ -33,7 +42,7 @@ export default function LowStockWarning({ brandName, setProductForStockUpdate, l
               type="button"
               className="shrink-0 underline underline-offset-4"
               aria-label={`Update stock for ${product.name}`}
-              onClick={() => setProductForStockUpdate(product)}
+              onClick={() => onUpdateStock(product)}
             >
               Update stock
             </button>
@@ -41,5 +50,5 @@ export default function LowStockWarning({ brandName, setProductForStockUpdate, l
         ))}
       </ul>
     </section>
-  ) : null);
+  );
 }

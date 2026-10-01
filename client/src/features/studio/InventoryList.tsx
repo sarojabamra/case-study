@@ -1,10 +1,26 @@
+import type { Product } from "@/services/types";
 import { stockLabel } from "@/utils/stock";
-import type { useStudioPage } from "./useStudioPage";
 
-type Props = Pick<ReturnType<typeof useStudioPage>, "formatPrice" | "setProductEditorState" | "setProductForStockUpdate" | "setProductPendingRemoval" | "filteredProductsOnPage">;
+type Props = {
+  products: Product[];
+  formatPrice: (price: number) => string;
+  onEdit: (product: Product) => void;
+  onUpdateStock: (product: Product) => void;
+  onRemove: (product: Product) => void;
+};
 
-export default function InventoryList({ formatPrice, setProductEditorState, setProductForStockUpdate, setProductPendingRemoval, filteredProductsOnPage }: Props) {
-  return (filteredProductsOnPage.length > 0 ? (
+export default function InventoryList({
+  products,
+  formatPrice,
+  onEdit,
+  onUpdateStock,
+  onRemove,
+}: Props) {
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
     <>
       <div className="mt-6 hidden overflow-x-auto border border-line md:block">
         <table className="w-full text-left text-sm">
@@ -18,7 +34,7 @@ export default function InventoryList({ formatPrice, setProductEditorState, setP
             </tr>
           </thead>
           <tbody>
-            {filteredProductsOnPage.map((product) => (
+            {products.map((product) => (
               <tr
                 key={product.id}
                 className="border-b border-line last:border-0"
@@ -38,21 +54,21 @@ export default function InventoryList({ formatPrice, setProductEditorState, setP
                     <button
                       type="button"
                       className="interactive-muted uppercase tracking-[0.08em]"
-                      onClick={() => setProductForStockUpdate(product)}
+                      onClick={() => onUpdateStock(product)}
                     >
                       Update stock
                     </button>
                     <button
                       type="button"
                       className="interactive-muted uppercase tracking-[0.08em]"
-                      onClick={() => setProductEditorState(product)}
+                      onClick={() => onEdit(product)}
                     >
                       Edit
                     </button>
                     <button
                       type="button"
                       className="interactive-muted uppercase tracking-[0.08em] text-danger"
-                      onClick={() => setProductPendingRemoval(product)}
+                      onClick={() => onRemove(product)}
                     >
                       Remove
                     </button>
@@ -64,35 +80,34 @@ export default function InventoryList({ formatPrice, setProductEditorState, setP
         </table>
       </div>
       <ul className="mt-6 space-y-4 md:hidden">
-        {filteredProductsOnPage.map((product) => (
+        {products.map((product) => (
           <li key={product.id} className="border border-line p-4">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-clay">
               {product.category_name}
             </p>
             <p className="mt-1 font-display text-2xl">{product.name}</p>
             <p className="mt-2 text-sm tabular-nums">
-              {formatPrice(product.price)} ·{" "}
-              {stockLabel(product.quantity).text}
+              {formatPrice(product.price)} · {stockLabel(product.quantity).text}
             </p>
             <div className="mt-4 flex flex-wrap gap-3 text-[0.6875rem] uppercase tracking-[0.08em]">
               <button
                 type="button"
                 className="interactive-muted"
-                onClick={() => setProductForStockUpdate(product)}
+                onClick={() => onUpdateStock(product)}
               >
                 Update stock
               </button>
               <button
                 type="button"
                 className="interactive-muted"
-                onClick={() => setProductEditorState(product)}
+                onClick={() => onEdit(product)}
               >
                 Edit
               </button>
               <button
                 type="button"
                 className="interactive-muted text-danger"
-                onClick={() => setProductPendingRemoval(product)}
+                onClick={() => onRemove(product)}
               >
                 Remove
               </button>
@@ -101,5 +116,5 @@ export default function InventoryList({ formatPrice, setProductEditorState, setP
         ))}
       </ul>
     </>
-  ) : null);
+  );
 }

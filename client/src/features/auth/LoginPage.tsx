@@ -17,7 +17,7 @@ import {
   Link,
   useLocation,
   useNavigate,
-  useSearchParams
+  useSearchParams,
 } from "react-router-dom";
 
 export default function LoginPage() {
@@ -27,7 +27,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [isBrandLoginExpanded, setIsBrandLoginExpanded] = useState(false);
   const prefilledUsername =
-    (location.state as { username?: string; } | null)?.username ?? "";
+    (location.state as { username?: string } | null)?.username ?? "";
   const brandNameForm = useForm({
     resolver: zodResolver(brandSchema),
     defaultValues: { name: "" },
@@ -59,16 +59,14 @@ export default function LoginPage() {
     }
   }
 
-  function navigateToBrandLoginPage(formValues: { name: string; }) {
+  function navigateToBrandLoginPage(formValues: { name: string }) {
     if (!brandsQuery.data) {
       toastStore.failure("The brand list could not be loaded.");
       return;
     }
+    const enteredBrandName = formValues.name.toLowerCase();
     const matchingBrand = brandsQuery.data.find(
-      (brand) =>
-        brand.name.localeCompare(formValues.name, undefined, {
-          sensitivity: "accent",
-        }) === 0,
+      (brand) => brand.name.toLowerCase() === enteredBrandName,
     );
     if (!matchingBrand) {
       brandNameForm.setError("name", { message: "That brand does not exist." });

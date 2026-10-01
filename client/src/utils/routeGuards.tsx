@@ -1,18 +1,11 @@
-import { Navigate,useLocation,useParams } from "react-router-dom";
+import { Navigate, useLocation, useParams } from "react-router-dom";
 
 import SystemState from "@/components/ui/SystemState";
 import { useAuth } from "@/utils/authSession";
 import { safeNext } from "@/utils/schemas";
 
-function brandNamesMatchIgnoringCase(
-  leftBrandName: string,
-  rightBrandName: string,
-) {
-  return (
-    leftBrandName.localeCompare(rightBrandName, undefined, {
-      sensitivity: "accent",
-    }) === 0
-  );
+function sameBrandName(leftBrandName: string, rightBrandName: string) {
+  return leftBrandName.toLowerCase() === rightBrandName.toLowerCase();
 }
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -83,7 +76,7 @@ export function RequireTenant({ children }: { children: React.ReactNode }) {
   if (
     user.role !== "TENANT" ||
     !user.tenant_name ||
-    !brandNamesMatchIgnoringCase(user.tenant_name, tenantNameFromUrl)
+    !sameBrandName(user.tenant_name, tenantNameFromUrl)
   ) {
     return (
       <SystemState
@@ -106,7 +99,7 @@ export function RequireTenant({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!(user as any).isBrandStaffLoggedIn) {
+  if (!user.isBrandStaffLoggedIn) {
     return (
       <SystemState
         title="Brand Studio Access Restricted"

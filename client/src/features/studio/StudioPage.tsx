@@ -106,8 +106,8 @@ export default function StudioPage() {
       </p>
       <LowStockWarning
         brandName={brandName}
-        setProductForStockUpdate={setProductForStockUpdate}
-        lowStockQuery={lowStockQuery}
+        products={lowStockQuery.data ?? []}
+        onUpdateStock={setProductForStockUpdate}
       />
       {lowStockQuery.isError ? (
         <div className="mt-6 border border-line p-4 text-sm">
@@ -167,10 +167,10 @@ export default function StudioPage() {
       ) : null}
       <InventoryList
         formatPrice={formatPrice}
-        setProductEditorState={setProductEditorState}
-        setProductForStockUpdate={setProductForStockUpdate}
-        setProductPendingRemoval={setProductPendingRemoval}
-        filteredProductsOnPage={filteredProductsOnPage}
+        products={filteredProductsOnPage}
+        onEdit={setProductEditorState}
+        onUpdateStock={setProductForStockUpdate}
+        onRemove={setProductPendingRemoval}
       />
       <Pagination
         page={currentPage}
