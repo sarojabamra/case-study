@@ -142,7 +142,10 @@ export default function StudioOrdersPage() {
 
       <ul className="mt-8 space-y-4">
         {(ordersQuery.data?.orders ?? []).map((order) => {
-          const nextStatuses = tenantStatusOptions(order.status);
+          const hasActiveItems = order.items.some((item) => !item.is_cancelled);
+          const nextStatuses = hasActiveItems
+            ? tenantStatusOptions(order.status)
+            : [];
           const isBusy = busyActionId === order.id;
           return (
             <li key={order.id} className="border border-line bg-surface p-5">
