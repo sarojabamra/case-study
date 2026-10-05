@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from server.images import build_object_key, prepare_image, read_upload
-from server.models import Order, OrderItem, Product, Review, SavedCartItem, User
+from server.models import Order, OrderItem, Product, Review, SavedCartItem, Tenant
 from server.repositories import services
 from server.schemas import ProductCreate, ProductUpdate
 from server.storage import ObjectStore, StorageError
@@ -14,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_product(
-    db: Session, tenant_name: str, current_user: User, product: ProductCreate
+    db: Session, tenant: Tenant, product: ProductCreate
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
     services.get_category(db, product.category_id)
 
     db_product = Product(
@@ -38,9 +37,8 @@ def create_product(
 
 
 def list_products(
-    db: Session, tenant_name: str, current_user: User, skip: int = 0, limit: int = 10
+    db: Session, tenant: Tenant, skip: int = 0, limit: int = 10
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
 
     products = (
         db.query(Product)
@@ -53,8 +51,7 @@ def list_products(
     return [services.serialize_product(product) for product in products]
 
 
-def get_studio_summary(db: Session, tenant_name: str, current_user: User):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
+def get_studio_summary(db: Session, tenant: Tenant):
     product_count = db.query(func.count(Product.id)).filter(Product.tenant_id == tenant.id).scalar() or 0
     low_stock_count = (
         db.query(func.count(Product.id))
@@ -101,8 +98,7 @@ def get_studio_summary(db: Session, tenant_name: str, current_user: User):
     }
 
 
-def list_low_stock_products(db: Session, tenant_name: str, current_user: User):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
+def list_low_stock_products(db: Session, tenant: Tenant):
     products = (
         db.query(Product)
         .options(selectinload(Product.category), selectinload(Product.tenant))
@@ -115,12 +111,10 @@ def list_low_stock_products(db: Session, tenant_name: str, current_user: User):
 
 def update_product(
     db: Session,
-    tenant_name: str,
-    current_user: User,
+    tenant: Tenant,
     product_id: int,
     product: ProductUpdate,
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
 
     db_product = services.get_product_for_tenant(db, tenant.id, product_id)
 
@@ -143,12 +137,10 @@ def update_product(
 
 def delete_product(
     db: Session,
-    tenant_name: str,
-    current_user: User,
+    tenant: Tenant,
     product_id: int,
     store: ObjectStore,
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
 
     db_product = services.get_product_for_tenant(db, tenant.id, product_id)
     dependencies = []
@@ -177,13 +169,11 @@ def delete_product(
 
 def save_product_image(
     db: Session,
-    tenant_name: str,
-    current_user: User,
+    tenant: Tenant,
     product_id: int,
     upload: UploadFile,
     store: ObjectStore,
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
     product = services.get_product_for_tenant(db, tenant.id, product_id)
     encoded, content_type, ext = prepare_image(read_upload(upload))
     key = build_object_key(tenant.id, product.id, ext)
@@ -223,12 +213,10 @@ def save_product_image(
 
 def delete_product_image(
     db: Session,
-    tenant_name: str,
-    current_user: User,
+    tenant: Tenant,
     product_id: int,
     store: ObjectStore,
 ):
-    tenant = services.verify_tenant_user(db, current_user, tenant_name)
     product = services.get_product_for_tenant(db, tenant.id, product_id)
     previous = product.image_key
     if not previous:

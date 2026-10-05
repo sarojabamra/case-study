@@ -1,5 +1,5 @@
 def test_tenant_return_decision_affects_only_its_order_item(
-    db, seed_catalog, normal_user, tenant_user
+    db, seed_catalog, normal_user
 ):
     from server.models import Order, OrderItem, Product
     from server.repositories import orders, services, tenant_orders
@@ -27,8 +27,7 @@ def test_tenant_return_decision_affects_only_its_order_item(
     orders.request_order_item_return(db, normal_user, order.id, nike_item.id)
     tenant_orders.update_tenant_order_item_return(
         db,
-        "Nike",
-        tenant_user,
+        seed_catalog["tenant"],
         order.id,
         nike_item.id,
         OrderReturnDecision(return_status="approved"),
@@ -47,7 +46,7 @@ def test_tenant_return_decision_affects_only_its_order_item(
 
 
 def test_tenant_cancellation_affects_only_its_order_item(
-    db, seed_catalog, normal_user, tenant_user
+    db, seed_catalog, normal_user
 ):
     from server.models import Order, OrderItem, Product
     from server.repositories import tenant_orders
@@ -68,7 +67,7 @@ def test_tenant_cancellation_affects_only_its_order_item(
     db.commit()
     stock_before = nike_product.quantity
 
-    tenant_orders.cancel_tenant_order_item(db, "Nike", tenant_user, order.id, nike_item.id)
+    tenant_orders.cancel_tenant_order_item(db, seed_catalog["tenant"], order.id, nike_item.id)
 
     db.refresh(nike_item)
     db.refresh(other_item)

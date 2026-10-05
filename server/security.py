@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 
 from server.database import get_db
 from server.env import load_app_env
-from server.models import User
+from server.models import Tenant, User
+from server.repositories.services import verify_tenant_user
 
 load_app_env()
 
@@ -125,3 +126,12 @@ async def require_admin(
         )
 
     return current_user
+
+
+async def require_tenant(
+    tenant_name: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Tenant:
+    """Return the brand after verifying tenant staff membership in the route."""
+    return verify_tenant_user(db, current_user, tenant_name)
