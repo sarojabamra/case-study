@@ -133,5 +133,4 @@ async def require_tenant(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Tenant:
-    """Return the brand after verifying tenant staff membership in the route."""
     return verify_tenant_user(db, current_user, tenant_name)
